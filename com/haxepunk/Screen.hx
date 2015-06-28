@@ -40,10 +40,7 @@ class Screen
 		{
 			HXP.engine.removeChild(_sprite);
 		}
-		if (HXP.renderMode == RenderMode.BUFFER)
-		{
-			HXP.engine.addChild(_sprite);
-		}
+			HXP.engine.addChild(_sprite); // Если не добавить - Input на хардварке ломается.
 	}
 
 	private inline function disposeBitmap(bd:Bitmap)

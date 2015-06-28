@@ -23,7 +23,7 @@ import openfl.utils.JNI;
  * 
  * Conversion is automatic, no need to use this.
  */
-abstract InputType(Either<String, Int>)
+abstract InputType(Either<String, Int>) from Either<String, Int> to Either<String, Int>
 {
 	@:dox(hide) public inline function new( e:Either<String, Int> ) this = e;
 	@:dox(hide) public var type(get,never):Either<String, Int>;
@@ -573,8 +573,15 @@ class Input
 	private static function onTouchMove(e:TouchEvent)
 	{
 		var point = _touches.get(e.touchPointID);
-		point.x = e.stageX / HXP.screen.fullScaleX;
-		point.y = e.stageY / HXP.screen.fullScaleY;
+    #if legacy
+    if (point != null)
+    {
+      #end
+      point.x = e.stageX / HXP.screen.fullScaleX;
+      point.y = e.stageY / HXP.screen.fullScaleY;
+      #if legacy
+    }
+    #end
 	}
 
 	private static function onTouchEnd(e:TouchEvent)

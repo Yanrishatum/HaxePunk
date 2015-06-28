@@ -2,10 +2,12 @@
 <project>
 	<app preloader="com.haxepunk.Preloader" unless="noHaxepunkPreloader || html5" />
 
-	<assets path="assets/graphics" rename="graphics" include="*.png" embed="true" />
-	<assets path="assets/font" rename="font" include="*.ttf" embed="true" />
+	<assets path="assets/graphics" rename="graphics" include="*.png" embed="true" unless="neko" />
+	<assets path="assets/graphics" rename="graphics" include="*.png" if="neko" />
+	<assets path="assets/font" rename="font" include="*.ttf" />
 
-	<set name="openfl-legacy" unless="next || hybrid" />
+  <!-- This one breaks my assets class
+	<set name="openfl-legacy" unless="next || hybrid" />-->
 	<haxelib name="openfl-ouya" if="ouya" />
 	<haxelib name="openfl" />
 </project>

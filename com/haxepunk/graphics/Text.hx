@@ -310,7 +310,7 @@ class Text extends Image
 		_field.height = _height;
 
 		_source.draw(_field);
-		super.updateBuffer();
+		updateBuffer();
 	}
 
 	/**
