@@ -8,8 +8,9 @@ import flash.ui.Multitouch;
 import flash.ui.MultitouchInputMode;
 import com.haxepunk.HXP;
 import com.haxepunk.ds.Either;
+import lime.ui.Joystick as LimeJoy;
 
-#if (cpp || neko)
+#if ((cpp || neko) && openfl_legacy)
 	import openfl.events.JoystickEvent;
 #end
 
@@ -23,14 +24,19 @@ import openfl.utils.JNI;
  * 
  * Conversion is automatic, no need to use this.
  */
+#if display
+typedef InputType = Dynamic;
+#else
 abstract InputType(Either<String, Int>) from Either<String, Int> to Either<String, Int>
 {
 	@:dox(hide) public inline function new( e:Either<String, Int> ) this = e;
 	@:dox(hide) public var type(get,never):Either<String, Int>;
 	@:to inline function get_type() return this;
+  
 	@:from static function fromLeft(v:String) return new InputType(Left(v));
 	@:from static function fromRight(v:Int) return new InputType(Right(v));
 }
+#end
 
 /**
  * Manage the different inputs.
@@ -282,6 +288,7 @@ class Input
 		{
 			joy = new Joystick();
 			_joysticks.set(id, joy);
+      if (LimeJoy.devices.exists(id)) joy.init(LimeJoy.devices.get(id));
 		}
 		return joy;
 	}
@@ -334,7 +341,9 @@ class Input
 				HXP.stage.addEventListener(TouchEvent.TOUCH_END, onTouchEnd);
 			}
 
-#if (openfl && (cpp || neko))
+      LimeJoy.onConnect.add(onJoyConnect);
+      
+#if (openfl_legacy && (cpp || neko))
 			HXP.stage.addEventListener(JoystickEvent.AXIS_MOVE, onJoyAxisMove);
 			HXP.stage.addEventListener(JoystickEvent.BALL_MOVE, onJoyBallMove);
 			HXP.stage.addEventListener(JoystickEvent.BUTTON_DOWN, onJoyButtonDown);
@@ -589,7 +598,13 @@ class Input
 		_touches.get(e.touchPointID).released = true;
 	}
 
-#if (openfl && (cpp || neko))
+  private static function onJoyConnect(j:LimeJoy):Void
+  {
+    var joy:Joystick = joystick(j.id);
+    if (!joy.connected) joy.init(j);
+  }
+  
+#if (openfl_legacy && (cpp || neko))
 
 	private static function onJoyAxisMove(e:JoystickEvent)
 	{

@@ -125,9 +125,16 @@ class Text extends Image
 		if (!Reflect.hasField(options, "resizable")) options.resizable = true;
 		if (!Reflect.hasField(options, "wordWrap"))  options.wordWrap  = false;
 		if (!Reflect.hasField(options, "leading"))   options.leading   = 0;
-
-		var fontObj = Assets.getFont(options.font);
-		_format = new TextFormat(fontObj.fontName, options.size, 0xFFFFFF);
+    
+    if (Assets.exists(options.font))
+    {
+      var fontObj = Assets.getFont(options.font);
+      _format = new TextFormat(fontObj.fontName, options.size, 0xFFFFFF);
+    }
+    else
+    {
+      _format = new TextFormat(options.font, options.size, 0xFFFFFF);
+    }
 		_format.align = options.align;
 		_format.leading = options.leading;
 
@@ -312,7 +319,7 @@ class Text extends Image
 		_source.draw(_field);
 		updateBuffer();
 	}
-
+  
 	/**
 	 * Removes the graphic from memory
 	 */

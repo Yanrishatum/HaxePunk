@@ -103,11 +103,13 @@ class Graphiclist extends Graphic
 	public function add(graphic:Graphic):Graphic
 	{
 		if (graphic == null) return graphic;
-
+    
+    graphic._entity = this._entity;
+    
 		// set blit mode on first add
 		if (_count == 0) blit = graphic.blit;
 		else if (blit != graphic.blit) throw "Can't add graphic objects with different render methods.";
-
+    
 		_graphics[_count ++] = graphic;
 		if (!active) active = graphic.active;
 		return graphic;
@@ -122,7 +124,7 @@ class Graphiclist extends Graphic
 	{
 		if (HXP.indexOf(_graphics, graphic) < 0) return graphic;
 		HXP.clear(_temp);
-
+    graphic._entity = null;
 		for (g in _graphics)
 		{
 			if (g == graphic) _count --;
@@ -185,6 +187,21 @@ class Graphiclist extends Graphic
 			}
 		}
 	}
+  
+  override public function updateEntity(ent:Entity):Void 
+  {
+    _entity = ent;
+    for (g in _graphics) g.updateEntity(ent);
+  }
+  
+  //@:allow(com.haxepunk.Entity)
+  //private function updateEntity():Void
+  //{
+    //for (g in _graphics)
+    //{
+      //g._entity = this._entity;
+    //}
+  //}
 
 	// List information.
 	private var _graphics:Array<Graphic>;

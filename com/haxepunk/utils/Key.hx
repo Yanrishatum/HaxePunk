@@ -15,6 +15,7 @@ class Key
 	public inline static var ENTER = 13;
 	public inline static var COMMAND = 15;
 	public inline static var CONTROL = 17;
+  public static inline var ALT = 18;
 	public inline static var SPACE = 32;
 	public inline static var SHIFT = 16;
 	public inline static var BACKSPACE = 8;
@@ -84,6 +85,8 @@ class Key
 	public inline static var DIGIT_7 = 55;
 	public inline static var DIGIT_8 = 56;
 	public inline static var DIGIT_9 = 57;
+  public inline static var MINUS = 189;
+  public inline static var PLUS = 187;
 
 	public inline static var NUMPAD_0 = 96;
 	public inline static var NUMPAD_1 = 97;
@@ -127,6 +130,7 @@ class Key
 
 			case ENTER:     return "ENTER";
 			case CONTROL:   return "CONTROL";
+      case ALT:       return "ALT";
 			case SPACE:     return "SPACE";
 			case SHIFT:     return "SHIFT";
 			case BACKSPACE: return "BACKSPACE";

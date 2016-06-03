@@ -2,6 +2,8 @@ package com.haxepunk.utils;
 
 import flash.geom.Point;
 import com.haxepunk.HXP;
+import lime.ui.Joystick as LimeJoy;
+import lime.ui.JoystickHatPosition;
 
 enum JoyButtonState
 {
@@ -53,16 +55,71 @@ class Joystick
 		axis = new Array<Float>();
 		hat = new Point(0, 0);
 		connected = false;
-		_timeout = 0;
 	}
 
+  public function init(j:LimeJoy):Void
+  {
+    j.onHatMove.add(onHatMove);
+    j.onAxisMove.add(onAxisMove);
+    j.onTrackballMove.add(onBallMove);
+    j.onButtonDown.add(onButtonDown);
+    j.onButtonUp.add(onButtonUp);
+    j.onDisconnect.add(onDisconnect);
+    //trace("init: " + j.id, j.name, j.guid);
+    connected = true;
+  }
+  
+  private function onDisconnect():Void
+  {
+    connected = false;
+    //trace("DISCONNECT");
+  }
+  
+  private function onButtonDown(id:Int):Void
+  {
+    //trace("DOWN: " + id);
+    buttons.set(id, BUTTON_PRESSED);
+  }
+  
+  private function onButtonUp(id:Int):Void
+  {
+    //trace("UP: " + id);
+    buttons.set(id, BUTTON_RELEASED);
+  }
+  
+  private function onHatMove(hatId:Int, axis:JoystickHatPosition):Void
+  {
+    //trace("HAT: " + hatId + ", " + axis);
+    if (hatId == 0)
+    {
+      this.hat.setTo(0, 0);
+      if (axis.left) this.hat.x--;
+      if (axis.right) this.hat.x++;
+      if (axis.up) this.hat.y--;
+      if (axis.down) this.hat.y++;
+    }
+  }
+  
+  private function onAxisMove(axisId:Int, value:Float):Void
+  {
+    //trace("AXIS: " + axisId + " = " + value);
+    while (axis.length < axisId + 1) axis.push(0);
+    this.axis[axisId] = value;
+  }
+  
+  private function onBallMove(id:Int, value:Float):Void
+  {
+    //trace("TRACKBALL: " + id + " = " + value);
+    if (id == 0) ball.x = value;
+    if (id == 1) ball.y = value;
+  }
+  
 	/**
 	 * Updates the joystick's state.
 	 */
 	@:dox(hide)
 	public function update()
 	{
-		_timeout -= HXP.elapsed;
 		for (button in buttons.keys())
 		{
 			switch (buttons.get(button))
@@ -133,6 +190,13 @@ class Joystick
 				if (b != BUTTON_OFF && b != BUTTON_RELEASED) return true;
 			}
 		}
+    else if (button == -1)
+    {
+      for (b in buttons)
+      {
+        if (b != BUTTON_OFF && b != BUTTON_RELEASED) return true;
+      }
+    }
 		else if (buttons.exists(button))
 		{
 			var b = buttons.get(button);
@@ -154,17 +218,7 @@ class Joystick
 	/**
 	 * If the joystick is currently connected.
 	 */
-	public var connected(get, set):Bool;
-	private function get_connected():Bool { return _timeout > 0; }
-	private function set_connected(value:Bool):Bool
-	{
-		if (value) _timeout = 3; // 3 seconds to timeout
-		else _timeout = 0;
-		return value;
-	}
-
-	private var _timeout:Float;
-
+	public var connected:Bool;
 }
 
 /**

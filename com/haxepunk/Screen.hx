@@ -106,7 +106,9 @@ class Screen
 	public function refresh()
 	{
 		// refreshes the screen
+    #if !display
 		HXP.buffer.fillRect(HXP.bounds, 0xFF000000 | HXP.stage.color);
+    #end
 	}
 
 	/**

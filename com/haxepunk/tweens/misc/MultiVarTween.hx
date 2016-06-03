@@ -38,7 +38,7 @@ class MultiVarTween extends Tween
 		_target = duration;
 		_ease = ease;
 		var p:String;
-
+    
 		var fields:Array<String> = null;
 		if (Reflect.isObject(properties))
 		{
@@ -70,7 +70,7 @@ class MultiVarTween extends Tween
 	{
 		super.update();
 		var i:Int = _vars.length;
-
+    
 		while (i-- > 0)
 		{
 			Reflect.setProperty(_object, _vars[i], _start[i] + _range[i] * _t);

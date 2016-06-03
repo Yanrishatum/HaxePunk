@@ -16,6 +16,9 @@ class Sfx
 	 */
 	@:dox(hide) // mistaken for a class function
 	public var complete:Void -> Void;
+  public var extComplete:Sfx->Void;
+  
+  public var id:String;
 
 	/**
 	 * Creates a sound effect from an embedded source. Store a reference to
@@ -150,6 +153,7 @@ class Sfx
 
 		_position = 0;
 		if (complete != null) complete();
+    if (extComplete != null) extComplete(this);
 	}
 
 	/** @private Add the sound to a list of those currently playing. */

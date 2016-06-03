@@ -1,20 +1,20 @@
 package com.haxepunk;
 
-import flash.display.BitmapData;
-import flash.display.Bitmap;
-import flash.display.Graphics;
-import flash.display.Sprite;
-import flash.display.Stage;
-import flash.display.StageDisplayState;
-import flash.geom.Matrix;
-import flash.geom.Point;
-import flash.geom.Rectangle;
+import openfl.display.BitmapData;
+import openfl.display.Bitmap;
+import openfl.display.Graphics;
+import openfl.display.Sprite;
+import openfl.display.Stage;
+import openfl.display.StageDisplayState;
+import openfl.geom.Matrix;
+import openfl.geom.Point;
+import openfl.geom.Rectangle;
 #if flash
-import flash.media.SoundMixer;
+import openfl.media.SoundMixer;
 #end
-import flash.media.SoundTransform;
-import flash.system.System;
-import flash.utils.ByteArray;
+import openfl.media.SoundTransform;
+import openfl.system.System;
+import openfl.utils.ByteArray;
 
 import com.haxepunk.Graphic;
 import com.haxepunk.Tween;
@@ -1151,6 +1151,7 @@ class HXP
 		var tween:MultiVarTween = new MultiVarTween(complete, type);
 		tween.tween(object, values, duration, ease);
 		tweener.addTween(tween);
+    tween.start();
 		return tween;
 	}
 
@@ -1240,11 +1241,12 @@ class HXP
 		#end
 	}
 
-	public static var time(null, set):Float;
+	public static var time(get, set):Float;
 	private static inline function set_time(value:Float):Float {
 		_time = value;
 		return _time;
 	}
+  private static inline function get_time():Float { return _time; }
 
 	// Console information.
 	private static var _console:Console;

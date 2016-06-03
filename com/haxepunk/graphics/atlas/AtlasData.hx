@@ -15,6 +15,9 @@ import openfl.display.Tilesheet;
  * 
  * Conversion is automatic, no need to use this.
  */
+#if display
+typedef AtlasDataType = Dynamic;
+#else
 abstract AtlasDataType(AtlasData)
 {
 	private inline function new(data:AtlasData) this = data;
@@ -30,6 +33,7 @@ abstract AtlasDataType(AtlasData)
 		return new AtlasDataType(data);
 	}
 }
+#end
 
 class AtlasData
 {
@@ -252,7 +256,7 @@ class AtlasData
 		red:Float, green:Float, blue:Float, alpha:Float, ?smooth:Bool)
 	{
 		if (smooth == null) smooth = Atlas.smooth;
-
+    
 		var state:DrawState = DrawState.getDrawState(_tilesheet, isRGB, isAlpha, smooth, blend);
 		var data:Array<Float> = state.data;
 		var dataIndex:Int = state.dataIndex;

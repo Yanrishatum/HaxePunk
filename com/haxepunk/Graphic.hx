@@ -42,6 +42,9 @@ abstract TileType(Either<BitmapData, TileAtlas>)
  * 
  * Conversion is automatic, no need to use this.
  */
+#if display
+typedef ImageType = Dynamic;
+#else
 abstract ImageType(Either<BitmapData, AtlasRegion>)
 {
 	private inline function new(e:Either<BitmapData, AtlasRegion>) this = e;
@@ -67,6 +70,7 @@ abstract ImageType(Either<BitmapData, AtlasRegion>)
 			return new ImageType(Left(bd));
 	}
 }
+#end
 
 /**
  * Base class for graphics type.
@@ -83,7 +87,9 @@ class Graphic
 	 * If the graphic should render.
 	 */
 	public var visible(get, set):Bool;
+  @:keep
 	private inline function get_visible():Bool { return _visible; }
+  @:keep
 	private inline function set_visible(value:Bool):Bool { return _visible = value; }
 
 	/**
@@ -187,6 +193,11 @@ class Graphic
 		active = true;
 	}
 
+  public function updateEntity(ent:Entity):Void
+  {
+    _entity = ent;
+  }
+  
 	// Graphic information.
 	private var _scroll:Bool;
 	private var _point:Point;

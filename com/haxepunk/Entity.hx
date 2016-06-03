@@ -569,10 +569,19 @@ class Entity extends Tweener
 	 */
 	public var graphic(get, set):Graphic;
 	private inline function get_graphic():Graphic { return _graphic; }
+  @:access(com.haxepunk.Graphic)
 	private function set_graphic(value:Graphic):Graphic
 	{
 		if (_graphic == value) return value;
+    if (_graphic != null)
+    {
+      _graphic.updateEntity(null);
+    }
 		_graphic = value;
+    if (value != null)
+    {
+      _graphic.updateEntity(this);
+    }
 		return _graphic;
 	}
 

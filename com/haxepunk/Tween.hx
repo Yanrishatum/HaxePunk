@@ -26,6 +26,7 @@ enum TweenType
 typedef FriendTween = {
 	private function finish():Void;
 
+  public var id:String;
 	private var _finish:Bool;
 	private var _parent:Tweener;
 	private var _prev:FriendTween;
@@ -41,6 +42,8 @@ class Tween extends EventDispatcher
 	/** If the tween is active. */
 	public var active:Bool;
 
+  public var id:String = "";
+  
 	/**
 	 * Constructor. Specify basic information about the Tween.
 	 * @param	duration		Duration of the tween (in seconds or frames).

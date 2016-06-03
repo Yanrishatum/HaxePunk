@@ -123,7 +123,8 @@ class Image extends Graphic
 			updateBuffer();
 		}
 
-		smooth = (HXP.stage.quality != LOW);
+		//smooth = (HXP.stage.quality != LOW);
+		smooth = false;//(HXP.stage.quality != LOW);
 	}
 
 	/** @private Initialize variables */
@@ -435,7 +436,9 @@ class Image extends Graphic
 	 * Change the opacity of the Image, a value from 0 to 1.
 	 */
 	public var alpha(get_alpha, set_alpha):Float;
+  @:keep
 	private inline function get_alpha():Float { return _alpha; }
+  @:keep
 	private function set_alpha(value:Float):Float
 	{
 		value = value < 0 ? 0 : (value > 1 ? 1 : value);

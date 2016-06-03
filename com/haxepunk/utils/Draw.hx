@@ -206,10 +206,12 @@ class Draw
 		}
 		else
 		{
+      var sx:Float = HXP.screen.fullScaleX;
+      var sy:Float = HXP.screen.fullScaleY;
 			_graphics.lineStyle(thick, color, alpha, false, LineScaleMode.NONE);
-			_graphics.moveTo(x1 - _camera.x, y1 - _camera.y);
-			_graphics.lineTo(x2 - _camera.x, y2 - _camera.y);
-			_graphics.lineStyle(0);
+			_graphics.moveTo((x1 - _camera.x) * sx, (y1 - _camera.y) * sy);
+			_graphics.lineTo((x2 - _camera.x) * sx, (y2 - _camera.y) * sy);
+			_graphics.lineStyle();
 		}
 	}
 
@@ -243,8 +245,10 @@ class Draw
 		}
 		else
 		{
+      var sx:Float = HXP.screen.fullScaleX;
+      var sy:Float = HXP.screen.fullScaleY;
 			_graphics.beginFill(color, alpha);
-			_graphics.drawRect(x - _camera.x, y - _camera.y, width, height);
+			_graphics.drawRect((x - _camera.x) * sx, (y - _camera.y) * sy, width * sx, height * sy);
 			_graphics.endFill();
 		}
 	}
@@ -274,8 +278,14 @@ class Draw
 		{
 			_graphics.lineStyle(thick, color, alpha);
 		}
-		
-		_graphics.drawRect(x - _camera.x, y - _camera.y, width, height);
+    
+    if (HXP.renderMode == RenderMode.BUFFER) _graphics.drawRect(x - _camera.x, y - _camera.y, width, height);
+    else
+    {
+      var sx:Float = HXP.screen.fullScaleX;
+      var sy:Float = HXP.screen.fullScaleY;
+      _graphics.drawRect((x - _camera.x) * sx, (y - _camera.y) * sy, width * sx, height * sy);
+    }
 		_graphics.endFill();
 		
 		HXP.renderMode == RenderMode.BUFFER ? drawToScreen() : _graphics.lineStyle(0);
@@ -361,17 +371,25 @@ class Draw
 		}
 		else
 		{
+      var sx:Float = HXP.screen.fullScaleX;
+      var sy:Float = HXP.screen.fullScaleY;
 			if (fill)
 			{
 				_graphics.beginFill(color & 0xFFFFFF, alpha);
-				_graphics.drawCircle(x - _camera.x, y - _camera.y, radius);
+        if (sx == sy)
+          _graphics.drawCircle((x - _camera.x) * sx, (y - _camera.y) * sy, radius * sx);
+        else
+          _graphics.drawEllipse((x - _camera.x - radius) * sx, (y - _camera.y - radius) * sy, radius * 2 * sx, radius * 2 * sy);
 				_graphics.endFill();
 			}
 			else
 			{
 				_graphics.lineStyle(thick, color & 0xFFFFFF, alpha);
-				_graphics.drawCircle(x - _camera.x, y - _camera.y, radius);
-				_graphics.lineStyle(0);
+        if (sx == sy)
+          _graphics.drawCircle((x - _camera.x) * sx, (y - _camera.y) * sy, radius * sx);
+        else
+          _graphics.drawEllipse((x - _camera.x - radius) * sx, (y - _camera.y - radius) * sy, radius * 2 * sx, radius * 2 * sy);
+				_graphics.lineStyle();
 			}
 		}
 	}
@@ -455,9 +473,11 @@ class Draw
 		}
 		else
 		{
+      var sx:Float = HXP.screen.fullScaleX;
+      var sy:Float = HXP.screen.fullScaleY;
 			_graphics.lineStyle(thick, color, alpha);
-			_graphics.moveTo(x1 - _camera.x, y1 - _camera.y);
-			_graphics.curveTo(x2 - _camera.x, y2 - _camera.y, x3 - _camera.x, y3 - _camera.y);
+			_graphics.moveTo((x1 - _camera.x) * sx, (y1 - _camera.y) * sy);
+			_graphics.curveTo((x2 - _camera.x) * sx, (y2 - _camera.y) * sy, (x3 - _camera.x) * sx, (y3 - _camera.y) * sy);
 			_graphics.lineStyle(0);
 		}
 	}
@@ -514,10 +534,27 @@ class Draw
 	 * @param  y       Y position.
 	 * @param  options Options (see Text constructor).
 	 */
+  @:access(com.haxepunk.graphics.Text)
 	public static function text(text:String, ?x:Float = 0, ?y:Float = 0, ?options:TextOptions = null)
 	{
 		var textGfx:Text = new Text(text, x, y, 0, 0, options);
-		textGfx.render(_target, HXP.zero, _camera);
+    if (HXP.renderMode == RenderMode.BUFFER) 
+    {
+      textGfx.render(_target, HXP.point, _camera);
+    } 
+    else 
+    {
+      x *= HXP.screen.fullScaleX;
+      y *= HXP.screen.fullScaleY;
+      var bmp:BitmapData = textGfx._source;
+      _matrix.identity();
+      _matrix.translate(x, y);
+      _graphics.beginBitmapFill(bmp, _matrix);
+      _graphics.drawRect(x, y, bmp.width, bmp.height);
+      _graphics.endFill();
+      //textGfx.renderAtlas(0, HXP.point, _camera);
+    }
+    textGfx.destroy();
 	}
 
 	// Drawing information.
