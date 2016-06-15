@@ -66,7 +66,7 @@ class SfxFader extends Tween
 		if (_sfx != null) _sfx.volume = _start + _range * _t;
 		if (_crossSfx != null) _crossSfx.volume = _crossRange * _t;
 	}
-
+  
 	/** @private When the tween completes. */
 	override private function finish()
 	{
@@ -76,7 +76,8 @@ class SfxFader extends Tween
 			_sfx = _crossSfx;
 			_crossSfx = null;
 		}
-		dispatchEvent(new TweenEvent(TweenEvent.FINISH));
+    
+    super.finish();
 	}
 
 	/**

@@ -54,7 +54,7 @@ class Sfx
 				if ( _sound == null )
 				{
 					_sound = source;
-					_sounds.set(__sound.url, source);
+					//_sounds.set(__sound.url, source);
 				}
 			}
 			else
