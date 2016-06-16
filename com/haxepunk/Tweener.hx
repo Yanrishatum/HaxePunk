@@ -36,7 +36,7 @@ class Tweener
 		var ft:FriendTween = t;
 
 		if (ft._parent != null) // So DON'T ADD IT. DO NOT THROW A FUCKING ERROR YOU MORRON
-			return; // throw "Cannot add a Tween object more than once.";
+			return t; // throw "Cannot add a Tween object more than once.";
 
 		ft._parent = this;
 		ft._next = _tween;
@@ -66,7 +66,7 @@ class Tweener
 	{
 		var ft:FriendTween = t;
 		if (ft._parent != this) // So DON'T REMOVE IT. DO NOT THROW A FUCKING ERROR YOU MORRON
-			return; // throw "Core object does not contain Tween.";
+			return t; // throw "Core object does not contain Tween.";
 
 		if (ft._next != null)
 			ft._next._prev = ft._prev;
