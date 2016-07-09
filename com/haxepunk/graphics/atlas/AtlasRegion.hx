@@ -3,6 +3,7 @@ package com.haxepunk.graphics.atlas;
 import flash.geom.Rectangle;
 import flash.geom.Point;
 import flash.geom.Matrix;
+import openfl.display.Tile;
 
 class AtlasRegion
 {
@@ -19,7 +20,7 @@ class AtlasRegion
 	 * Height of this region
 	 */
 	public var height(get, never):Float;
-
+  
 	/**
 	 * Creates a new AtlasRegion
 	 * @param  parent    The AtlasData parent to use for rendering

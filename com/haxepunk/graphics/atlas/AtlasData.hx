@@ -7,8 +7,12 @@ import flash.display.Graphics;
 import flash.display.Sprite;
 import flash.geom.Rectangle;
 import flash.geom.Point;
-import flash.geom.Matrix;
-import openfl.display.Tilesheet;
+import openfl.display.BlendMode;
+import openfl.geom.Matrix;
+import openfl.display.Tile;
+import openfl.display.Tileset;
+import openfl.utils.Float32Array;
+//import openfl.display.Tilesheet;
 
 /**
  * Abstract representing either a `String`, a `AtlasData` or a `BitmapData`.
@@ -43,17 +47,12 @@ class AtlasData
 	
 	public var isRGB:Bool;
 	public var isAlpha:Bool;
-
-	public static inline var BLEND_NONE:Int = 0;
-	public static inline var BLEND_ADD:Int = Tilesheet.TILE_BLEND_ADD;
-	public static inline var BLEND_NORMAL:Int = Tilesheet.TILE_BLEND_NORMAL;
-#if flash
-	public static inline var BLEND_MULTIPLY:Int = BLEND_NONE;
-	public static inline var BLEND_SCREEN:Int = BLEND_NONE;
-#else
-	public static inline var BLEND_MULTIPLY:Int = Tilesheet.TILE_BLEND_MULTIPLY;
-	public static inline var BLEND_SCREEN:Int = Tilesheet.TILE_BLEND_SCREEN;
-#end
+  
+	public static inline var BLEND_NONE:Int = BLEND_NORMAL;
+	public static inline var BLEND_ADD:Int = 0;
+	public static inline var BLEND_NORMAL:Int = 10;
+	public static inline var BLEND_MULTIPLY:Int = 9;
+	public static inline var BLEND_SCREEN:Int = 12;
 
 	/**
 	 * Creates a new AtlasData class
@@ -65,7 +64,7 @@ class AtlasData
 	 */
 	public function new(bd:BitmapData, ?name:String, ?flags:Int)
 	{
-		_tilesheet = new Tilesheet(bd);
+		_texture = bd;
 		_name = name;
 
 		if(_name != null)
@@ -137,7 +136,8 @@ class AtlasData
 	private static inline function startScene(scene:Scene):Void
 	{
 		_scene = scene;
-		_scene.sprite.graphics.clear();
+    _scene.tilemap.clear();
+		//_scene.sprite.graphics.clear();
 	}
 	
 	@:allow(com.haxepunk.Scene)
@@ -180,7 +180,7 @@ class AtlasData
 	{
 		return new AtlasRegion(this, rect.clone());
 	}
-
+  
 	/**
 	 * Prepares a tile to be drawn using a matrix
 	 * @param  rect   The source rectangle to draw
@@ -202,39 +202,87 @@ class AtlasData
 	{
 		if (smooth == null) smooth = Atlas.smooth;
 		
-		var state:DrawState = DrawState.getDrawState(_tilesheet, isRGB, isAlpha, smooth, blend);
-		var data:Array<Float> = state.data;
+		var state:DrawState = DrawState.getDrawState(_texture, smooth, blend);
+    state.ensureElement();
+		var data:Float32Array = state.buffer;
 		var dataIndex:Int = state.dataIndex;
-		
-		// Destination point
-		data[dataIndex++] = tx;
-		data[dataIndex++] = ty;
-
-		// Source rectangle
-		data[dataIndex++] = rect.x;
-		data[dataIndex++] = rect.y;
-		data[dataIndex++] = rect.width;
-		data[dataIndex++] = rect.height;
-
-		// matrix transformation
-		data[dataIndex++] = a; // m00
-		data[dataIndex++] = b; // m10
-		data[dataIndex++] = c; // m01
-		data[dataIndex++] = d; // m11
-
-		// color
-		if (isRGB)
-		{
-			data[dataIndex++] = red;
-			data[dataIndex++] = green;
-			data[dataIndex++] = blue;
-		}
-		if (isAlpha)
-		{
-			data[dataIndex++] = alpha;
-		}
-		
+    
+    // UV
+    var uvx:Float = rect.x / _texture.width;
+    var uvy:Float = rect.y / _texture.height;
+    var uvx2:Float = rect.right / _texture.width;
+    var uvy2:Float = rect.bottom / _texture.height;
+    
+    // Transformed position
+    var matrix:Matrix = HXP.matrix;
+    matrix.setTo(a, b, c, d, tx, ty);
+    
+    // Position
+    var x :Float = matrix.__transformX(0, 0); // Top-left
+    var y :Float = matrix.__transformY(0, 0);
+    var x2:Float = matrix.__transformX(rect.width, 0); // Top-right
+    var y2:Float = matrix.__transformY(rect.width, 0);
+    var x3:Float = matrix.__transformX(0, rect.height); // Bottom-left
+    var y3:Float = matrix.__transformY(0, rect.height);
+    var x4:Float = matrix.__transformX(rect.width, rect.height); // Bottom-right
+    var y4:Float = matrix.__transformY(rect.width, rect.height);
+    
+    // Set values
+    if (!isRGB)
+    {
+      red = 1;
+      green = 1;
+      blue = 1;
+    }
+    if (!isAlpha) alpha = 1;
+    
+    inline function fillTint():Void
+    {
+      data[dataIndex++] = red;
+      data[dataIndex++] = green;
+      data[dataIndex++] = blue;
+      data[dataIndex++] = alpha;
+    }
+    
+    // Triangle 1, top-left
+    data[dataIndex++] = x;
+    data[dataIndex++] = y;
+    data[dataIndex++] = uvx;
+    data[dataIndex++] = uvy;
+    fillTint();
+    // Triangle 1, top-right
+    data[dataIndex++] = x2;
+    data[dataIndex++] = y2;
+    data[dataIndex++] = uvx2;
+    data[dataIndex++] = uvy;
+    fillTint();
+    // Triangle 1, bottom-left
+    data[dataIndex++] = x3;
+    data[dataIndex++] = y3;
+    data[dataIndex++] = uvx;
+    data[dataIndex++] = uvy2;
+    fillTint();
+    // Triangle 2, bottom-left
+    data[dataIndex++] = x3;
+    data[dataIndex++] = y3;
+    data[dataIndex++] = uvx;
+    data[dataIndex++] = uvy2;
+    fillTint();
+    // Triangle 2, top-right
+    data[dataIndex++] = x2;
+    data[dataIndex++] = y2;
+    data[dataIndex++] = uvx2;
+    data[dataIndex++] = uvy;
+    fillTint();
+    // Triangle 2, bottom-right
+    data[dataIndex++] = x4;
+    data[dataIndex++] = y4;
+    data[dataIndex++] = uvx2;
+    data[dataIndex++] = uvy2;
+    fillTint();
+    
 		state.dataIndex = dataIndex;
+    state.count++;
 	}
 
 	/**
@@ -256,60 +304,19 @@ class AtlasData
 		red:Float, green:Float, blue:Float, alpha:Float, ?smooth:Bool)
 	{
 		if (smooth == null) smooth = Atlas.smooth;
-    
-		var state:DrawState = DrawState.getDrawState(_tilesheet, isRGB, isAlpha, smooth, blend);
-		var data:Array<Float> = state.data;
-		var dataIndex:Int = state.dataIndex;
-		
-		// Destination point
-		data[dataIndex++] = x;
-		data[dataIndex++] = y;
-
-		// Source rectangle
-		data[dataIndex++] = rect.x;
-		data[dataIndex++] = rect.y;
-		data[dataIndex++] = rect.width;
-		data[dataIndex++] = rect.height;
-
-		// matrix transformation
-		if (angle == 0)
-		{
-			// fast defaults for non-rotated tiles (cos=1, sin=0)
-			data[dataIndex++] = scaleX; // m00
-			data[dataIndex++] = 0; // m01
-			data[dataIndex++] = 0; // m10
-			data[dataIndex++] = scaleY; // m11
-		}
-		else
-		{
-			var rad = -angle * HXP.RAD;
-			var cos = Math.cos(rad);
-			var sin = Math.sin(rad);
-			data[dataIndex++] = cos * scaleX; // m00
-			data[dataIndex++] = -sin * scaleY; // m10
-			data[dataIndex++] = sin * scaleX; // m01
-			data[dataIndex++] = cos * scaleY; // m11
-		}
-
-		if (isRGB)
-		{
-			data[dataIndex++] = red;
-			data[dataIndex++] = green;
-			data[dataIndex++] = blue;
-		}
-		if (isAlpha)
-		{
-			data[dataIndex++] = alpha;
-		}
-		
-		state.dataIndex = dataIndex;
+    var matrix:Matrix = HXP.matrix;
+    matrix.identity();
+    matrix.scale(scaleX, scaleY);
+    matrix.rotate( -angle * HXP.RAD);
+    matrix.translate(x, y);
+    prepareTileMatrix(rect, layer, matrix.tx, matrix.ty, matrix.a, matrix.b, matrix.c, matrix.d, red, green, blue, alpha, smooth);
 	}
 
 	/**
 	 * Sets the blend mode for rendering (`BLEND_NONE`, `BLEND_NORMAL`, `BLEND_ADD`)
 	 * Default: `BLEND_NORMAL`
 	 */
-	public var blend(default, set):Int = 0;
+	public var blend(default, set):Int = BLEND_NORMAL;
 	private function set_blend(value:Int):Int
 	{
 		// check that value is actually a blend flag
@@ -330,7 +337,7 @@ class AtlasData
 
 	private var _layerIndex:Int = 0;
 
-	private var _tilesheet:Tilesheet;
+	private var _texture:BitmapData;
 
 	private static var _scene:Scene;
 	private static var _dataPool:Map<String, AtlasData> = new Map<String, AtlasData>();

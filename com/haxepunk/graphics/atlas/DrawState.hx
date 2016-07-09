@@ -1,6 +1,13 @@
 package com.haxepunk.graphics.atlas;
 import com.haxepunk.Scene;
-import openfl.display.Tilesheet;
+import lime.graphics.opengl.GLBuffer;
+import lime.utils.Float32Array;
+import openfl.display.BitmapData;
+import openfl.display.Tile;
+import openfl.display.Tilemap;
+import openfl.display.TilemapLayer;
+import openfl.display.Tileset;
+//import openfl.display.Tilesheet;
 
 class DrawState
 {
@@ -8,8 +15,8 @@ class DrawState
 	
 	private static var drawHead:DrawState;
 	private static var drawTail:DrawState;
-	
-	private static function getState(tilesheet:Tilesheet, rgb:Bool, alpha:Bool, smooth:Bool, blend:Int):DrawState
+  
+	private static function getState(texture:BitmapData, smooth:Bool, blend:Int):DrawState
 	{
 		var state:DrawState = null;
 		
@@ -24,7 +31,7 @@ class DrawState
 			state = new DrawState();
 		}
 		
-		state.set(tilesheet, rgb, alpha, smooth, blend);
+		state.set(texture, smooth, blend);
 		return state;
 	}
 	
@@ -58,71 +65,119 @@ class DrawState
 		drawTail = null;
 	}
 	
-	public static function getDrawState(tilesheet:Tilesheet, rgb:Bool, alpha:Bool, smooth:Bool, blend:Int):DrawState
+	public static function getDrawState(texture:BitmapData, smooth:Bool, blend:Int):DrawState
 	{
 		var state:DrawState = null;
 		if (drawTail != null)
 		{
-			if (drawTail.tilesheet == tilesheet && drawTail.rgb == rgb && drawTail.alpha == alpha && drawTail.smooth == smooth && drawTail.blend == blend)
+			if (drawTail.texture == texture && drawTail.smooth == smooth && drawTail.blend == blend)
 			{
 				return drawTail;
 			}
 			else
 			{
-				state = getState(tilesheet, rgb, alpha, smooth, blend);
+				state = getState(texture, smooth, blend);
 				drawTail.next = state;
 				drawTail = state;
 			}
 		}
 		else
 		{
-			state = getState(tilesheet, rgb, alpha, smooth, blend);
+			state = getState(texture, smooth, blend);
 			drawTail = drawHead = state;
 		}
     
     return state;
 	}
 	
-	public var tilesheet:Tilesheet;
-	public var data:Array<Float>;
-	public var dataIndex:Int = 0;
-	public var alpha:Bool = false;
-	public var rgb:Bool = false;
 	public var smooth:Bool = false;
-	public var blend:Int = 0;
+	public var blend:Int = AtlasData.BLEND_NONE;
 	
 	public var next:DrawState;
+  
+  private var batcher:TilemapLayer;
+  
+  /** Buffer for this DrawState */
+  public var buffer:Float32Array;
+  public var glBuffer:GLBuffer;
+  /** Amount of sprites */
+  public var count:Int = 0;
+	public var dataIndex:Int = 0;
+  public var texture:BitmapData;
 	
 	public function new() 
 	{
-		data = [];
+    
 	}
+  
+  public function ensureElement():Void
+  {
+    if (buffer == null) buffer = new Float32Array(HardwareRenderer.TILE_SIZE * HardwareRenderer.MINIMUM_TILE_COUNT_PER_BUFFER);
+    else if (buffer.length < count * HardwareRenderer.TILE_SIZE + HardwareRenderer.TILE_SIZE)
+    {
+      var oldBufferData = buffer; // TODO: Improve?
+      buffer = new Float32Array(count * HardwareRenderer.TILE_SIZE + HardwareRenderer.TILE_SIZE);
+      var i:Int = 0;
+      while (i < oldBufferData.length)
+      {
+        buffer[i] = oldBufferData[i];
+      }
+    }
+  }
 	
 	public inline function reset():Void
 	{
 		dataIndex = 0;
-    tilesheet = null;
+    count = 0;
+    texture = null;
 		next = null;
-    
 		DrawState.putState(this);
 	}
 	
-	public inline function set(tilesheet:Tilesheet, rgb:Bool, alpha:Bool, smooth:Bool, blend:Int):Void
+	public inline function set(texture:BitmapData, smooth:Bool, blend:Int):Void
 	{
-		this.tilesheet = tilesheet;
-		this.rgb = rgb;
-		this.alpha = alpha;
+		this.texture = texture;
 		this.smooth = smooth;
 		this.blend = blend;
 	}
-	
+  
 	public inline function render(scene:Scene):Void
 	{
-		var flags:Int = Tilesheet.TILE_TRANS_2x2 | Tilesheet.TILE_RECT | blend;
-		if (rgb) flags |= Tilesheet.TILE_RGB;
-		if (alpha) flags |= Tilesheet.TILE_ALPHA;
+    scene.tilemap.drawTiles(this);
+		//var flags:Int = Tilesheet.TILE_TRANS_2x2 | Tilesheet.TILE_RECT | blend;
+		//if (rgb) flags |= Tilesheet.TILE_RGB;
+		//if (alpha) flags |= Tilesheet.TILE_ALPHA;
+		//
+    
+		//// Destination point
+		//data[dataIndex++] = tx;
+		//data[dataIndex++] = ty;
+//
+		//// Source rectangle
+		//data[dataIndex++] = rect.x;
+		//data[dataIndex++] = rect.y;
+		//data[dataIndex++] = rect.width;
+		//data[dataIndex++] = rect.height;
+//
+		//// matrix transformation
+		//data[dataIndex++] = a; // m00
+		//data[dataIndex++] = b; // m10
+		//data[dataIndex++] = c; // m01
+		//data[dataIndex++] = d; // m11
+//
+		//// color
+		//if (isRGB)
+		//{
+			//data[dataIndex++] = red;
+			//data[dataIndex++] = green;
+			//data[dataIndex++] = blue;
+		//}
+		//if (isAlpha)
+		//{
+			//data[dataIndex++] = alpha;
+		//}
 		
-    if (dataIndex > 0)  tilesheet.drawTiles(scene.sprite.graphics, data, smooth, flags, dataIndex); 
-    dataIndex = 0;
+    //if (dataIndex > 0)  tilesheet.drawTiles(scene.sprite.graphics, data, smooth, flags, dataIndex); 
+    //dataIndex = 0;
 	}
 }

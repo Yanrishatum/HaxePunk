@@ -1,6 +1,7 @@
 package com.haxepunk;
 
 import com.haxepunk.graphics.atlas.AtlasData;
+import com.haxepunk.graphics.atlas.HardwareRenderer;
 import flash.display.Sprite;
 import flash.geom.Point;
 import com.haxepunk.Entity;
@@ -33,6 +34,8 @@ class Scene extends Tweener
 		visible = true;
 		camera = new Point();
 		sprite = new Sprite();
+    tilemap = new HardwareRenderer();
+    sprite.addChild(tilemap);
 
 		_layerList = new Array<Int>();
 
@@ -161,6 +164,8 @@ class Scene extends Tweener
 	 * Sprite used to store layer sprites when RenderMode.HARDWARE is set.
 	 */
 	public var sprite(default, null):Sprite;
+  
+  public var tilemap(default, null):HardwareRenderer;
 
 	/**
 	 * Adds the Entity to the Scene at the end of the frame.

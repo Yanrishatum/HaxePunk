@@ -12,7 +12,7 @@ import flash.events.Event;
 import flash.geom.Point;
 import flash.geom.Rectangle;
 
-import openfl.display.Tilesheet;
+import openfl.display.Tileset;
 
 @:bitmap("assets/graphics/preloader/haxepunk.png")
 class HaxePunkLogo extends BitmapData {}
@@ -30,12 +30,12 @@ class Preloader extends NMEPreloader
 			  0, 260, 1, 1,  0, // haxepunk
 		];
 
-		tiles = new Tilesheet(new HaxePunkLogo(0, 0));
-		tiles.addTileRect(new Rectangle(0, 0, 274, 58)); // powered by
-		tiles.addTileRect(new Rectangle(0, 65, 274, 80)); // haxepunk
-		tiles.addTileRect(new Rectangle(0, 165, 114, 190), new Point(57, 190)); // factory
-		tiles.addTileRect(new Rectangle(115, 164, 134, 136), new Point(67, 68)); // large cog
-		tiles.addTileRect(new Rectangle(123, 305, 56, 56), new Point(28, 28)); // small cog
+		tiles = new Tileset(new HaxePunkLogo(0, 0));
+		//tiles.addTileRect(new Rectangle(0, 0, 274, 58)); // powered by
+		//tiles.addTileRect(new Rectangle(0, 65, 274, 80)); // haxepunk
+		//tiles.addTileRect(new Rectangle(0, 165, 114, 190), new Point(57, 190)); // factory
+		//tiles.addTileRect(new Rectangle(115, 164, 134, 136), new Point(67, 68)); // large cog
+		//tiles.addTileRect(new Rectangle(123, 305, 56, 56), new Point(28, 28)); // small cog
 
 		scaleIncrement = 0.002;
 
@@ -80,12 +80,13 @@ class Preloader extends NMEPreloader
 			scaleIncrement = -scaleIncrement;
 
 		outline.graphics.clear();
-		tiles.drawTiles(outline.graphics, tileData, true, Tilesheet.TILE_ROTATION | Tilesheet.TILE_SCALE);
+    // TODO: Make it render
+		//tiles.drawTiles(outline.graphics, tileData, true, Tilesheet.TILE_ROTATION | Tilesheet.TILE_SCALE);
 	}
 
 	private var scaleIncrement:Float;
 
-	private var tiles:Tilesheet;
+	private var tiles:Tileset;
 	private var tileData:Array<Float>;
 
 }
