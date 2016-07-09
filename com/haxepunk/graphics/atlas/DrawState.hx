@@ -121,6 +121,7 @@ class DrawState
       while (i < oldBufferData.length)
       {
         buffer[i] = oldBufferData[i];
+        i++;
       }
     }
   }
