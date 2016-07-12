@@ -145,40 +145,5 @@ class DrawState
 	public inline function render(scene:Scene):Void
 	{
     scene.tilemap.drawTiles(this);
-		//var flags:Int = Tilesheet.TILE_TRANS_2x2 | Tilesheet.TILE_RECT | blend;
-		//if (rgb) flags |= Tilesheet.TILE_RGB;
-		//if (alpha) flags |= Tilesheet.TILE_ALPHA;
-		//
-    
-		//// Destination point
-		//data[dataIndex++] = tx;
-		//data[dataIndex++] = ty;
-//
-		//// Source rectangle
-		//data[dataIndex++] = rect.x;
-		//data[dataIndex++] = rect.y;
-		//data[dataIndex++] = rect.width;
-		//data[dataIndex++] = rect.height;
-//
-		//// matrix transformation
-		//data[dataIndex++] = a; // m00
-		//data[dataIndex++] = b; // m10
-		//data[dataIndex++] = c; // m01
-		//data[dataIndex++] = d; // m11
-//
-		//// color
-		//if (isRGB)
-		//{
-			//data[dataIndex++] = red;
-			//data[dataIndex++] = green;
-			//data[dataIndex++] = blue;
-		//}
-		//if (isAlpha)
-		//{
-			//data[dataIndex++] = alpha;
-		//}
-		
-    //if (dataIndex > 0)  tilesheet.drawTiles(scene.sprite.graphics, data, smooth, flags, dataIndex); 
-    //dataIndex = 0;
 	}
 }
