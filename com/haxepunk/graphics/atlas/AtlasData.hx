@@ -7,11 +7,13 @@ import flash.display.Graphics;
 import flash.display.Sprite;
 import flash.geom.Rectangle;
 import flash.geom.Point;
+import lime.graphics.opengl.GLBuffer;
+import lime.utils.Float32Array;
+import lime.utils.UInt32Array;
 import openfl.display.BlendMode;
 import openfl.geom.Matrix;
 import openfl.display.Tile;
 import openfl.display.Tileset;
-import openfl.utils.Float32Array;
 //import openfl.display.Tilesheet;
 
 /**
@@ -54,6 +56,19 @@ class AtlasData
 	public static inline var BLEND_MULTIPLY:Int = 9;
 	public static inline var BLEND_SCREEN:Int = 12;
 
+  public var buffer:Float32Array;
+  public var indexes:UInt32Array;
+  public var glBuffer:GLBuffer;
+  public var glIndexes:GLBuffer;
+  
+  public var indexBufferDirty:Bool;
+  public var vertexBufferDirty:Bool;
+  
+  /** Current amount of filled data in tiles. */
+  public var bufferOffset:Int;
+  /** Overall buffer size */
+  public var bufferSize:Int;
+  
 	/**
 	 * Creates a new AtlasData class
 	 * 
@@ -78,6 +93,7 @@ class AtlasData
 				_dataPool.set(_name, this);
 			}
 		}
+    _atlases.push(this);
 
 		isAlpha = true;
 		isRGB = true;
@@ -85,7 +101,54 @@ class AtlasData
 		width = bd.width;
 		height = bd.height;
 	}
-
+  
+  private function ensureElement():Void
+  {
+    if (buffer == null)
+    {
+      bufferSize = HardwareRenderer.MINIMUM_TILE_COUNT_PER_BUFFER;
+      buffer = new Float32Array(HardwareRenderer.MINIMUM_TILE_COUNT_PER_BUFFER * HardwareRenderer.TILE_SIZE);
+      indexes = new UInt32Array(HardwareRenderer.MINIMUM_TILE_COUNT_PER_BUFFER * 6);
+      
+      fillIndexBuffer();
+    }
+    else if (bufferOffset >= bufferSize)
+    {
+      var oldBuffer:Float32Array = buffer;
+      
+      bufferSize += HardwareRenderer.MINIMUM_TILE_COUNT_PER_BUFFER;
+      buffer = new Float32Array(bufferSize * HardwareRenderer.TILE_SIZE);
+      indexes = new UInt32Array(bufferSize * 6);
+      
+      var i:Int = 0;
+      while (i < oldBuffer.length)
+      {
+        buffer[i] = oldBuffer[i];
+        i++;
+      }
+      
+      fillIndexBuffer();
+    }
+  }
+  
+  private inline function fillIndexBuffer():Void
+  {
+    var i:Int = 0;
+    var vertexOffset:Int = 0;
+    while (i < indexes.length)
+    {
+      indexes[i    ] = vertexOffset;//0;
+      indexes[i + 1] = vertexOffset + 1;
+      indexes[i + 2] = vertexOffset + 2;
+      indexes[i + 3] = vertexOffset + 2;
+      indexes[i + 4] = vertexOffset + 1;
+      indexes[i + 5] = vertexOffset + 3;
+      vertexOffset += 4;
+      i += 6;
+    }
+    indexBufferDirty = true;
+  }
+  
 	/**
 	 * Get's the atlas data for a specific texture, useful for setting rendering flags
 	 * @param	name	The name of the image file
@@ -137,6 +200,10 @@ class AtlasData
 	{
 		_scene = scene;
     _scene.tilemap.clear();
+    for (atlas in _atlases)
+    {
+      atlas.bufferOffset = 0;
+    }
 		//_scene.sprite.graphics.clear();
 	}
 	
@@ -202,10 +269,11 @@ class AtlasData
 	{
 		if (smooth == null) smooth = Atlas.smooth;
 		
-		var state:DrawState = DrawState.getDrawState(_texture, smooth, blend);
-    state.ensureElement();
-		var data:Float32Array = state.buffer;
-		var dataIndex:Int = state.dataIndex;
+		var state:DrawState = DrawState.getDrawState(this, _texture, smooth, blend);
+    ensureElement();
+    
+		var data:Float32Array = buffer;
+		var dataIndex:Int = bufferOffset * HardwareRenderer.TILE_SIZE;
     
     // UV
     var uvx:Float = rect.x / _texture.width;
@@ -262,18 +330,18 @@ class AtlasData
     data[dataIndex++] = uvx;
     data[dataIndex++] = uvy2;
     fillTint();
-    // Triangle 2, bottom-left
-    data[dataIndex++] = x3;
-    data[dataIndex++] = y3;
-    data[dataIndex++] = uvx;
-    data[dataIndex++] = uvy2;
-    fillTint();
-    // Triangle 2, top-right
-    data[dataIndex++] = x2;
-    data[dataIndex++] = y2;
-    data[dataIndex++] = uvx2;
-    data[dataIndex++] = uvy;
-    fillTint();
+    //// Triangle 2, bottom-left
+    //data[dataIndex++] = x3;
+    //data[dataIndex++] = y3;
+    //data[dataIndex++] = uvx;
+    //data[dataIndex++] = uvy2;
+    //fillTint();
+    //// Triangle 2, top-right
+    //data[dataIndex++] = x2;
+    //data[dataIndex++] = y2;
+    //data[dataIndex++] = uvx2;
+    //data[dataIndex++] = uvy;
+    //fillTint();
     // Triangle 2, bottom-right
     data[dataIndex++] = x4;
     data[dataIndex++] = y4;
@@ -281,8 +349,9 @@ class AtlasData
     data[dataIndex++] = uvy2;
     fillTint();
     
-		state.dataIndex = dataIndex;
+    bufferOffset++;
     state.count++;
+    vertexBufferDirty = true;
 	}
 
 	/**
@@ -342,4 +411,5 @@ class AtlasData
 	private static var _scene:Scene;
 	private static var _dataPool:Map<String, AtlasData> = new Map<String, AtlasData>();
 	private static var _uniqueId:Int = 0; // allows for unique names
+  private static var _atlases:Array<AtlasData> = new Array();
 }

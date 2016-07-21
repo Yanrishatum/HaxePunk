@@ -2,6 +2,7 @@ package com.haxepunk.graphics.atlas;
 import com.haxepunk.Scene;
 import lime.graphics.opengl.GLBuffer;
 import lime.utils.Float32Array;
+import lime.utils.UInt32Array;
 import openfl.display.BitmapData;
 import openfl.display.Tile;
 import openfl.display.Tilemap;
@@ -16,7 +17,7 @@ class DrawState
 	private static var drawHead:DrawState;
 	private static var drawTail:DrawState;
   
-	private static function getState(texture:BitmapData, smooth:Bool, blend:Int):DrawState
+	private static function getState(data:AtlasData, texture:BitmapData, smooth:Bool, blend:Int):DrawState
 	{
 		var state:DrawState = null;
 		
@@ -31,7 +32,7 @@ class DrawState
 			state = new DrawState();
 		}
 		
-		state.set(texture, smooth, blend);
+		state.set(data, texture, smooth, blend);
 		return state;
 	}
 	
@@ -65,25 +66,25 @@ class DrawState
 		drawTail = null;
 	}
 	
-	public static function getDrawState(texture:BitmapData, smooth:Bool, blend:Int):DrawState
+	public static function getDrawState(data:AtlasData, texture:BitmapData, smooth:Bool, blend:Int):DrawState
 	{
 		var state:DrawState = null;
 		if (drawTail != null)
 		{
-			if (drawTail.texture == texture && drawTail.smooth == smooth && drawTail.blend == blend)
+			if (drawTail.data == data && drawTail.texture == texture && drawTail.smooth == smooth && drawTail.blend == blend)
 			{
 				return drawTail;
 			}
 			else
 			{
-				state = getState(texture, smooth, blend);
+				state = getState(data, texture, smooth, blend);
 				drawTail.next = state;
 				drawTail = state;
 			}
 		}
 		else
 		{
-			state = getState(texture, smooth, blend);
+			state = getState(data, texture, smooth, blend);
 			drawTail = drawHead = state;
 		}
     
@@ -97,53 +98,40 @@ class DrawState
   
   private var batcher:TilemapLayer;
   
-  /** Buffer for this DrawState */
-  public var buffer:Float32Array;
-  public var glBuffer:GLBuffer;
   /** Amount of sprites */
   public var count:Int = 0;
-	public var dataIndex:Int = 0;
+	public var offset:Int = 0;
   public var texture:BitmapData;
-	
+  public var data:AtlasData;
+  
 	public function new() 
 	{
     
 	}
   
-  public function ensureElement():Void
-  {
-    if (buffer == null) buffer = new Float32Array(HardwareRenderer.TILE_SIZE * HardwareRenderer.MINIMUM_TILE_COUNT_PER_BUFFER);
-    else if (buffer.length < count * HardwareRenderer.TILE_SIZE + HardwareRenderer.TILE_SIZE)
-    {
-      var oldBufferData = buffer; // TODO: Improve?
-      buffer = new Float32Array(count * HardwareRenderer.TILE_SIZE + HardwareRenderer.TILE_SIZE);
-      var i:Int = 0;
-      while (i < oldBufferData.length)
-      {
-        buffer[i] = oldBufferData[i];
-        i++;
-      }
-    }
-  }
-	
 	public inline function reset():Void
 	{
-		dataIndex = 0;
+		offset = 0;
     count = 0;
     texture = null;
+    data = null;
 		next = null;
 		DrawState.putState(this);
 	}
 	
-	public inline function set(texture:BitmapData, smooth:Bool, blend:Int):Void
+	public inline function set(data:AtlasData, texture:BitmapData, smooth:Bool, blend:Int):Void
 	{
+    this.data = data;
 		this.texture = texture;
 		this.smooth = smooth;
 		this.blend = blend;
+    this.offset = data.bufferOffset;
 	}
   
 	public inline function render(scene:Scene):Void
 	{
+    //trace(offset, count, offset + count, data.bufferSize);
+    //if (offset + count >= data.bufferSize) throw "INVALID DATA";
     scene.tilemap.drawTiles(this);
 	}
 }

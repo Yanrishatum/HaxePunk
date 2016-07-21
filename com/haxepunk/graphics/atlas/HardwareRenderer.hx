@@ -1,6 +1,7 @@
 package com.haxepunk.graphics.atlas;
 import lime.graphics.GLRenderContext;
 import lime.utils.Float32Array;
+import lime.utils.UInt32Array;
 import openfl.display.BitmapData;
 import openfl.display.BlendMode;
 import openfl.display.DisplayObject;
@@ -19,13 +20,16 @@ import openfl._internal.renderer.opengl.GLRenderer;
 class HardwareRenderer extends DisplayObject
 {
   
-  public static inline var TILE_SIZE:Int = 48;
+  //public static inline var TILE_SIZE:Int = 48;
+  public static inline var TILE_SIZE:Int = 8 * 4;
   public static inline var MINIMUM_TILE_COUNT_PER_BUFFER:Int = 10;
   private static var shader:TileShader;
   
   private var states:Array<DrawState>;
   private var stateTextures:Array<BitmapData>;
+  private var stateBuffers:Array<AtlasData>;
   private var stateCoutns:Array<Int>;
+  private var stateOffsets:Array<Int>;
   private var stateNum:Int;
   
   public function new ()
@@ -34,7 +38,9 @@ class HardwareRenderer extends DisplayObject
     if (shader == null) shader = new TileShader();
     states = new Array();
     stateTextures = new Array();
+    stateBuffers = new Array();
     stateCoutns = new Array();
+    stateOffsets = new Array();
     stateNum = 0;
   }
   
@@ -47,8 +53,10 @@ class HardwareRenderer extends DisplayObject
   public function drawTiles(state:DrawState):Void
   {
     states[stateNum] =  state;
-    stateCoutns[stateNum] = state.count;
+    stateCoutns[stateNum] = state.count * 6;
     stateTextures[stateNum] = state.texture;
+    stateBuffers[stateNum] = state.data;
+    stateOffsets[stateNum] = state.offset * 6 * 4;
     stateNum++;
   }
   
@@ -109,6 +117,7 @@ class HardwareRenderer extends DisplayObject
     while (i < stateNum)
     {
       var state:DrawState = states[i];
+      var data:AtlasData = stateBuffers[i];
       
       if (blend != state.blend)
       {
@@ -122,16 +131,31 @@ class HardwareRenderer extends DisplayObject
         gl.bindTexture (gl.TEXTURE_2D, texture.getTexture (gl));
       }
       
-      if (state.glBuffer == null) state.glBuffer = gl.createBuffer();
-			gl.bindBuffer(gl.ARRAY_BUFFER, state.glBuffer);
+      if (data.glBuffer == null)
+      {
+        data.glBuffer = gl.createBuffer();
+        data.glIndexes = gl.createBuffer();
+      }
       
-      gl.bufferData(gl.ARRAY_BUFFER, state.buffer, gl.DYNAMIC_DRAW);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, data.glIndexes);
+      if (data.indexBufferDirty)
+      {
+        data.indexBufferDirty = false;
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, data.indexes, gl.DYNAMIC_DRAW);
+      }
+      
+			gl.bindBuffer(gl.ARRAY_BUFFER, data.glBuffer);
+      if (data.vertexBufferDirty)
+      {
+        data.vertexBufferDirty = false;
+        gl.bufferData(gl.ARRAY_BUFFER, data.buffer, gl.DYNAMIC_DRAW);
+      }
       
       gl.vertexAttribPointer(shader.data.aPosition.index, 2, gl.FLOAT, false, 8 * Float32Array.BYTES_PER_ELEMENT, 0);
       gl.vertexAttribPointer(shader.data.aTexCoord.index, 2, gl.FLOAT, false, 8 * Float32Array.BYTES_PER_ELEMENT, 2 * Float32Array.BYTES_PER_ELEMENT);
       gl.vertexAttribPointer(shader.data.aColor.index, 4, gl.FLOAT, false, 8 * Float32Array.BYTES_PER_ELEMENT, 4 * Float32Array.BYTES_PER_ELEMENT);
       
-      gl.drawArrays(gl.TRIANGLES, 0, stateCoutns[i] * 6);
+      gl.drawElements(gl.TRIANGLES, stateCoutns[i], gl.UNSIGNED_INT, stateOffsets[i]);
       
       i++;
     }
