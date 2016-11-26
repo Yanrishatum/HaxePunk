@@ -23,7 +23,7 @@ class HardwareRenderer extends DisplayObject
   //public static inline var TILE_SIZE:Int = 48;
   public static inline var TILE_SIZE:Int = 8 * 4;
   public static inline var MINIMUM_TILE_COUNT_PER_BUFFER:Int = 10;
-  private static var shader:TileShader;
+  private static var renderShader:TileShader;
   
   private var states:Array<DrawState>;
   private var stateTextures:Array<BitmapData>;
@@ -35,7 +35,7 @@ class HardwareRenderer extends DisplayObject
   public function new ()
   {
     super();
-    if (shader == null) shader = new TileShader();
+    if (renderShader == null) renderShader = new TileShader();
     states = new Array();
     stateTextures = new Array();
     stateBuffers = new Array();
@@ -104,9 +104,9 @@ class HardwareRenderer extends DisplayObject
     var gl:GLRenderContext = renderSession.gl;
     var renderer:GLRenderer = cast renderSession.renderer;
     
-    renderSession.shaderManager.setShader(shader);
-    gl.uniform1f(shader.data.uAlpha.index, this.__worldAlpha);
-    gl.uniformMatrix4fv(shader.data.uMatrix.index, false, renderer.getMatrix(this.__worldTransform));
+    renderSession.shaderManager.setShader(renderShader);
+    gl.uniform1f(renderShader.data.uAlpha.index, this.__worldAlpha);
+    gl.uniformMatrix4fv(renderShader.data.uMatrix.index, false, renderer.getMatrix(this.__worldTransform));
     //gl.uniformMatrix4fv (shader.data.uMatrix.index, false, renderer.getMatrix (tilemap.__worldTransform));
     
     var blend:Int = -1;
@@ -151,9 +151,9 @@ class HardwareRenderer extends DisplayObject
         gl.bufferData(gl.ARRAY_BUFFER, data.buffer, gl.DYNAMIC_DRAW);
       }
       
-      gl.vertexAttribPointer(shader.data.aPosition.index, 2, gl.FLOAT, false, 8 * Float32Array.BYTES_PER_ELEMENT, 0);
-      gl.vertexAttribPointer(shader.data.aTexCoord.index, 2, gl.FLOAT, false, 8 * Float32Array.BYTES_PER_ELEMENT, 2 * Float32Array.BYTES_PER_ELEMENT);
-      gl.vertexAttribPointer(shader.data.aColor.index, 4, gl.FLOAT, false, 8 * Float32Array.BYTES_PER_ELEMENT, 4 * Float32Array.BYTES_PER_ELEMENT);
+      gl.vertexAttribPointer(renderShader.data.aPosition.index, 2, gl.FLOAT, false, 8 * Float32Array.BYTES_PER_ELEMENT, 0);
+      gl.vertexAttribPointer(renderShader.data.aTexCoord.index, 2, gl.FLOAT, false, 8 * Float32Array.BYTES_PER_ELEMENT, 2 * Float32Array.BYTES_PER_ELEMENT);
+      gl.vertexAttribPointer(renderShader.data.aColor.index, 4, gl.FLOAT, false, 8 * Float32Array.BYTES_PER_ELEMENT, 4 * Float32Array.BYTES_PER_ELEMENT);
       
       gl.drawElements(gl.TRIANGLES, stateCoutns[i], gl.UNSIGNED_INT, stateOffsets[i]);
       

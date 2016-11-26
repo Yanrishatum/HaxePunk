@@ -268,7 +268,7 @@ class AtlasData
 		red:Float, green:Float, blue:Float, alpha:Float, ?smooth:Bool)
 	{
 		if (smooth == null) smooth = Atlas.smooth;
-		
+    
 		var state:DrawState = DrawState.getDrawState(this, _texture, smooth, blend);
     ensureElement();
     
