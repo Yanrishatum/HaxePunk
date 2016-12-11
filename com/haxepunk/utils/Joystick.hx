@@ -43,6 +43,8 @@ class Joystick
 	 * Determines the joystick's deadZone. Anything under this value will be considered 0 to prevent jitter.
 	 */
 	public static inline var deadZone:Float = 0.15;
+  
+  public var polling:Array<Int>;
 
 	/**
 	 * Creates and initializes a new Joystick.
@@ -54,30 +56,34 @@ class Joystick
 		ball = new Point(0, 0);
 		axis = new Array<Float>();
 		hat = new Point(0, 0);
+    polling = new Array<Int>();
 		connected = false;
 	}
 
   public function init(j:LimeJoy):Void
   {
+    if (polling.indexOf(j.id) != -1) return;
+    polling.push(j.id);
     j.onHatMove.add(onHatMove);
     j.onAxisMove.add(onAxisMove);
     j.onTrackballMove.add(onBallMove);
     j.onButtonDown.add(onButtonDown);
     j.onButtonUp.add(onButtonUp);
-    j.onDisconnect.add(onDisconnect);
-    //trace("init: " + j.id, j.name, j.guid);
+    j.onDisconnect.add(onDisconnect.bind(j.id));
+    trace("init: " + j.id, j.name, j.guid);
     connected = true;
   }
   
-  private function onDisconnect():Void
+  private function onDisconnect(id:Int):Void
   {
+    polling.remove(id);
     connected = false;
     //trace("DISCONNECT");
   }
   
   private function onButtonDown(id:Int):Void
   {
-    //trace("DOWN: " + id);
+    trace("DOWN: " + id);
     buttons.set(id, BUTTON_PRESSED);
   }
   

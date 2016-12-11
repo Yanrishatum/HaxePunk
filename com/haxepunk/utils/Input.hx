@@ -288,7 +288,11 @@ class Input
 		{
 			joy = new Joystick();
 			_joysticks.set(id, joy);
+      #if hp_poll_all_joysticks
+      for (device in LimeJoy.devices) joy.init(device);
+      #else
       if (LimeJoy.devices.exists(id)) joy.init(LimeJoy.devices.get(id));
+      #end
 		}
 		return joy;
 	}
@@ -601,7 +605,11 @@ class Input
   private static function onJoyConnect(j:LimeJoy):Void
   {
     var joy:Joystick = joystick(j.id);
+    #if hp_poll_all_joysticks
+    for (joy in _joysticks) joy.init(j);
+    #else
     if (!joy.connected) joy.init(j);
+    #end
   }
   
 #if (openfl_legacy && (cpp || neko))
