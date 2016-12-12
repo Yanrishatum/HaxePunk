@@ -70,7 +70,7 @@ class Joystick
     j.onButtonDown.add(onButtonDown);
     j.onButtonUp.add(onButtonUp);
     j.onDisconnect.add(onDisconnect.bind(j.id));
-    trace("init: " + j.id, j.name, j.guid);
+    //trace("init: " + j.id, j.name, j.guid);
     connected = true;
   }
   
@@ -83,7 +83,7 @@ class Joystick
   
   private function onButtonDown(id:Int):Void
   {
-    trace("DOWN: " + id);
+    //trace("DOWN: " + id);
     buttons.set(id, BUTTON_PRESSED);
   }
   
