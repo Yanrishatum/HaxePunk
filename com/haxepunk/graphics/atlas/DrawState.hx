@@ -6,7 +6,7 @@ import lime.utils.UInt32Array;
 import openfl.display.BitmapData;
 import openfl.display.Tile;
 import openfl.display.Tilemap;
-import openfl.display.TilemapLayer;
+//import openfl.display.TilemapLayer;
 import openfl.display.Tileset;
 //import openfl.display.Tilesheet;
 
@@ -96,7 +96,7 @@ class DrawState
 	
 	public var next:DrawState;
   
-  private var batcher:TilemapLayer;
+  //private var batcher:TilemapLayer;
   
   /** Amount of sprites */
   public var count:Int = 0;

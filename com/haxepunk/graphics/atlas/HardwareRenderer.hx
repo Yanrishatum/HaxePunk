@@ -31,10 +31,12 @@ class HardwareRenderer extends DisplayObject
   private var stateCoutns:Array<Int>;
   private var stateOffsets:Array<Int>;
   private var stateNum:Int;
+  private var transMatrix:Float32Array;
   
   public function new ()
   {
     super();
+    transMatrix = new Float32Array(16);
     if (renderShader == null) renderShader = new TileShader();
     states = new Array();
     stateTextures = new Array();
@@ -104,15 +106,25 @@ class HardwareRenderer extends DisplayObject
     var gl:GLRenderContext = renderSession.gl;
     var renderer:GLRenderer = cast renderSession.renderer;
     
+    var i:Int = 0;
+    var m:Array<Float> = renderer.getMatrix(this.__worldTransform);
+    while (i < 16)
+    {
+      transMatrix[i] = m[i];
+      i++;
+    }
     renderSession.shaderManager.setShader(renderShader);
+    //gl.enable(gl.BLEND);
+    //renderSession.blendModeManager.setBlendMode(cast 10);
+    gl.blendEquation(gl.FUNC_ADD);
+    gl.blendFuncSeparate(gl.ONE, gl.ONE_MINUS_SRC_ALPHA, gl.SRC_ALPHA, gl.ZERO);
     gl.uniform1f(renderShader.data.uAlpha.index, this.__worldAlpha);
-    gl.uniformMatrix4fv(renderShader.data.uMatrix.index, false, renderer.getMatrix(this.__worldTransform));
+    gl.uniformMatrix4fv(renderShader.data.uMatrix.index, false, transMatrix);
     //gl.uniformMatrix4fv (shader.data.uMatrix.index, false, renderer.getMatrix (tilemap.__worldTransform));
     
-    var blend:Int = -1;
+    var blend:Int = 10;
     var texture:BitmapData = null;
-    
-    var i:Int = 0;
+    i = 0;
     var offset:Int;
     while (i < stateNum)
     {
@@ -123,6 +135,7 @@ class HardwareRenderer extends DisplayObject
       {
         renderSession.blendModeManager.setBlendMode(cast (state.blend)); // BlendMode is Int abstract, should work?
         blend = state.blend;
+        //if (blend != 10) trace(blend);
       }
       
       if (texture != stateTextures[i])

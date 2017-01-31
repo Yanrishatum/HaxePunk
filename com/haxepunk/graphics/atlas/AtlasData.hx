@@ -276,10 +276,10 @@ class AtlasData
 		var dataIndex:Int = bufferOffset * HardwareRenderer.TILE_SIZE;
     
     // UV
-    var uvx:Float = rect.x / _texture.width;
-    var uvy:Float = rect.y / _texture.height;
-    var uvx2:Float = rect.right / _texture.width;
-    var uvy2:Float = rect.bottom / _texture.height;
+    var uvx:Float = (rect.x) / _texture.width;
+    var uvy:Float = (rect.y) / _texture.height;
+    var uvx2:Float = (rect.right) / _texture.width;
+    var uvy2:Float = (rect.bottom) / _texture.height;
     
     // Transformed position
     var matrix:Matrix = HXP.matrix;
@@ -303,6 +303,11 @@ class AtlasData
       blue = 1;
     }
     if (!isAlpha) alpha = 1;
+    else
+    {
+      if (alpha < 0) alpha = 0;
+      else if (alpha > 1) alpha = 1;
+    }
     
     inline function fillTint():Void
     {

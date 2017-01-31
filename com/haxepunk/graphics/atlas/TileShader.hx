@@ -9,19 +9,7 @@ import openfl.gl.GL;
 class TileShader extends Shader
 {
 
-  public function new() 
-  {
-    super();
-    if (glProgram != null)
-    {
-      GL.deleteProgram(this.glProgram); // Delete what super created
-      this.glProgram = null;
-    }
-    this.data = null;
-    
-    // Then reinit all the data.
-		glVertexSource =
-			
+  @:glVertexSource(
 			"attribute vec4 aPosition;
 			attribute vec2 aTexCoord;
       attribute vec4 aColor;
@@ -36,10 +24,9 @@ class TileShader extends Shader
         vColor = aColor;
 				gl_Position = uMatrix * aPosition;
 				
-			}";
-		
-		glFragmentSource = 
-			
+			}"
+  )
+  @:glFragmentSource(
 			"varying vec2 vTexCoord;
       varying vec4 vColor;
 			uniform sampler2D uImage0;
@@ -48,20 +35,20 @@ class TileShader extends Shader
 			void main(void) {
 				
 				vec4 color = texture2D (uImage0, vTexCoord);
-				
-				if (color.a == 0.0) {
-					
-					gl_FragColor = vec4 (0.0, 0.0, 0.0, 0.0);
-					
-				} else {
-          
-					gl_FragColor = vec4 (color.rgb / color.a, color.a * uAlpha)*vColor;
-					
-				}
-				
-			}";
-    // And call init again.
-    __init();
+        if (color.a == 0)
+        {
+          gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
+        }
+        else
+        {
+          gl_FragColor = vec4 ((color.rgb / color.a) * vColor.rgb * color.a * vColor.a, color.a*uAlpha*vColor.a);
+        }
+        
+			}"
+  )
+  public function new() 
+  {
+    super();
   }
   
 }
