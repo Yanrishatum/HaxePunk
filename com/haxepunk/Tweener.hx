@@ -64,6 +64,7 @@ class Tweener
 	 */
 	public function removeTween(t:Tween):Tween
 	{
+    if (t == null) return null;
 		var ft:FriendTween = t;
 		if (ft._parent != this) // So DON'T REMOVE IT. DO NOT THROW A FUCKING ERROR YOU MORRON
 			return t; // throw "Core object does not contain Tween.";

@@ -269,6 +269,9 @@ class AtlasData
 	{
 		if (smooth == null) smooth = Atlas.smooth;
     
+    //if (rect.width == 0 || rect.height == 0 || alpha == 0 || rect.right > width || rect.bottom > height || rect.top < 0 || rect.left < 0) throw "WUT";
+    
+    #if !display
 		var state:DrawState = DrawState.getDrawState(this, _texture, smooth, blend);
     ensureElement();
     
@@ -357,6 +360,7 @@ class AtlasData
     bufferOffset++;
     state.count++;
     vertexBufferDirty = true;
+    #end
 	}
 
 	/**

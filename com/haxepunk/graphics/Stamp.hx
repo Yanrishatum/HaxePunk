@@ -15,6 +15,8 @@ import flash.geom.Rectangle;
  */
 class Stamp extends Graphic
 {
+  
+  public var alpha:Float = 1;
 	/**
 	 * Constructor.
 	 * @param	source		Source image.
@@ -59,8 +61,8 @@ class Stamp extends Graphic
 		_point.x = point.x + x - camera.x * scrollX;
 		_point.y = point.y + y - camera.y * scrollY;
 
-		var sx = HXP.screen.fullScaleX, sy = HXP.screen.fullScaleY;
-		_region.draw(Math.floor(_point.x * sx), Math.floor(_point.y * sy), layer, sx, sy);
+		//var sx = HXP.screen.fullScaleX, sy = HXP.screen.fullScaleY;
+		_region.draw(Math.floor(_point.x), Math.floor(_point.y), layer, 1, 1, 0, 1, 1, 1, alpha);
 	}
 
 	/**

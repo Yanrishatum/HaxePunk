@@ -101,7 +101,10 @@ class AtlasRegion
 		layer:Int, red:Float=1, green:Float=1, blue:Float=1, alpha:Float=1, ?smooth:Bool)
 	{
 		if (smooth == null) smooth = Atlas.smooth;
-		
+    //var x:Float = HXP.screen.fullScaleX;
+		//tx *= x; a *= x;
+    //x = HXP.screen.fullScaleY;
+    //ty *= x; d *= x;
 		if (rotated)
 		{
 			matrix.setTo(a, b, c, d, tx, ty);

@@ -188,9 +188,7 @@ class Image extends Graphic
 	override public function renderAtlas(layer:Int, point:Point, camera:Point)
 	{
 		var sx = scale * scaleX,
-			sy = scale * scaleY,
-			fsx = HXP.screen.fullScaleX,
-			fsy = HXP.screen.fullScaleY;
+			sy = scale * scaleY;
 			
 		// determine drawing location
 		_point.x = point.x + x - originX - camera.x * scrollX;
@@ -210,11 +208,8 @@ class Image extends Graphic
 				_point.x += _sourceRect.width * sx;
 			}
 
-			_point.x = _point.x * fsx;
-			_point.y = _point.y * fsy;
-
 			// render without rotation
-			_region.draw(_point.x, _point.y, layer, sx * fsx * (_flipped ? -1 : 1), sy * fsy, angle, _red, _green, _blue, _alpha, smooth);
+			_region.draw(_point.x, _point.y, layer, sx * (_flipped ? -1 : 1), sy, angle, _red, _green, _blue, _alpha, smooth);
 		}
 		else
 		{
@@ -226,12 +221,12 @@ class Image extends Graphic
 			var angle = angle * HXP.RAD;
 			var cos = Math.cos(angle);
 			var sin = Math.sin(angle);
-			var a = sx * cos * fsx;
-			var b = sx * sin * fsy;
-			var c = -sy * sin * fsx;
-			var d = sy * cos * fsy;
-			var tx = (-originX * sx * cos + originY * sy * sin + originX + _point.x) * fsx;
-			var ty = (-originX * sx * sin - originY * sy * cos + originY + _point.y) * fsy;
+			var a = sx * cos;
+			var b = sx * sin;
+			var c = -sy * sin;
+			var d = sy * cos;
+			var tx = (-originX * sx * cos + originY * sy * sin + originX + _point.x);
+			var ty = (-originX * sx * sin - originY * sy * cos + originY + _point.y);
 
 			_region.drawMatrix(tx, ty, a, b, c, d, layer, _red, _green, _blue, _alpha, smooth);
 		}

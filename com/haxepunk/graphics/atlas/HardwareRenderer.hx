@@ -23,6 +23,8 @@ class HardwareRenderer extends DisplayObject
   //public static inline var TILE_SIZE:Int = 48;
   public static inline var TILE_SIZE:Int = 8 * 4;
   public static inline var MINIMUM_TILE_COUNT_PER_BUFFER:Int = 10;
+  
+  public static var onRender:Void->Void;
   private static var renderShader:TileShader;
   
   private var states:Array<DrawState>;
@@ -108,6 +110,10 @@ class HardwareRenderer extends DisplayObject
     
     var i:Int = 0;
     var m:Array<Float> = renderer.getMatrix(this.__worldTransform);
+    #if !hp_disable_autoscaling
+    scaleX = HXP.screen.fullScaleY;
+    scaleY = HXP.screen.fullScaleY;
+    #end
     while (i < 16)
     {
       transMatrix[i] = m[i];
@@ -171,6 +177,11 @@ class HardwareRenderer extends DisplayObject
       gl.drawElements(gl.TRIANGLES, stateCoutns[i], gl.UNSIGNED_INT, stateOffsets[i]);
       
       i++;
+    }
+    if (onRender != null)
+    {
+      gl.finish();
+      onRender();
     }
     #end
   }

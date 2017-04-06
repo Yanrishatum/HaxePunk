@@ -52,7 +52,6 @@ class Spritemap extends Image
 				super(bd, _rect);
 			case Right(atlas):
 				_atlas = atlas;
-
 				if (frameWidth > _atlas.width || frameHeight > _atlas.height)
 				{
 					throw "Frame width and height can't be bigger than the source image dimension.";
