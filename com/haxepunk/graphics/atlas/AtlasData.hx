@@ -9,6 +9,7 @@ import flash.geom.Rectangle;
 import flash.geom.Point;
 import lime.graphics.opengl.GLBuffer;
 import lime.utils.Float32Array;
+import lime.utils.UInt16Array;
 import lime.utils.UInt32Array;
 import openfl.display.BlendMode;
 import openfl.geom.Matrix;
@@ -57,7 +58,7 @@ class AtlasData
 	public static inline var BLEND_SCREEN:Int = 12;
 
   public var buffer:Float32Array;
-  public var indexes:UInt32Array;
+  public var indexes:UInt16Array;
   public var glBuffer:GLBuffer;
   public var glIndexes:GLBuffer;
   
@@ -108,7 +109,7 @@ class AtlasData
     {
       bufferSize = HardwareRenderer.MINIMUM_TILE_COUNT_PER_BUFFER;
       buffer = new Float32Array(HardwareRenderer.MINIMUM_TILE_COUNT_PER_BUFFER * HardwareRenderer.TILE_SIZE);
-      indexes = new UInt32Array(HardwareRenderer.MINIMUM_TILE_COUNT_PER_BUFFER * 6);
+      indexes = new UInt16Array(HardwareRenderer.MINIMUM_TILE_COUNT_PER_BUFFER * 6);
       
       fillIndexBuffer();
     }
@@ -118,7 +119,7 @@ class AtlasData
       
       bufferSize += HardwareRenderer.MINIMUM_TILE_COUNT_PER_BUFFER;
       buffer = new Float32Array(bufferSize * HardwareRenderer.TILE_SIZE);
-      indexes = new UInt32Array(bufferSize * 6);
+      indexes = new UInt16Array(bufferSize * 6);
       
       var i:Int = 0;
       while (i < oldBuffer.length)
@@ -146,6 +147,7 @@ class AtlasData
       vertexOffset += 4;
       i += 6;
     }
+    //trace("[INFO] Atlas index buffer size and offset now: " + vertexOffset, indexes.length);
     indexBufferDirty = true;
   }
   
@@ -285,18 +287,30 @@ class AtlasData
     var uvy2:Float = (rect.bottom) / _texture.height;
     
     // Transformed position
-    var matrix:Matrix = HXP.matrix;
-    matrix.setTo(a, b, c, d, tx, ty);
+    //var matrix:Matrix = HXP.matrix;
+    //matrix.setTo(a, b, c, d, tx, ty);
+    
+    // px/py: inputs
+    //__transformX: px * a + py * c + tx
+    //__transformY: px * b + py * d + ty
     
     // Position
-    var x :Float = matrix.__transformX(0, 0); // Top-left
-    var y :Float = matrix.__transformY(0, 0);
-    var x2:Float = matrix.__transformX(rect.width, 0); // Top-right
-    var y2:Float = matrix.__transformY(rect.width, 0);
-    var x3:Float = matrix.__transformX(0, rect.height); // Bottom-left
-    var y3:Float = matrix.__transformY(0, rect.height);
-    var x4:Float = matrix.__transformX(rect.width, rect.height); // Bottom-right
-    var y4:Float = matrix.__transformY(rect.width, rect.height);
+    var x :Float = tx;                   // Top-left
+    var y :Float = ty;                   
+    var x2:Float = a * rect.width + tx;  // Top-right
+    var y2:Float = b * rect.width + ty;
+    var x3:Float = c * rect.height + tx; // Bottom-left
+    var y3:Float = d * rect.height + ty;
+    var x4:Float = x2 + c * rect.height; // Bottom-right
+    var y4:Float = y2 + d * rect.height;
+    //var x :Float = matrix.__transformX(0, 0); // Top-left
+    //var y :Float = matrix.__transformY(0, 0);
+    //var x2:Float = matrix.__transformX(rect.width, 0); // Top-right
+    //var y2:Float = matrix.__transformY(rect.width, 0);
+    //var x3:Float = matrix.__transformX(0, rect.height); // Bottom-left
+    //var y3:Float = matrix.__transformY(0, rect.height);
+    //var x4:Float = matrix.__transformX(rect.width, rect.height); // Bottom-right
+    //var y4:Float = matrix.__transformY(rect.width, rect.height);
     
     // Set values
     if (!isRGB)
@@ -319,6 +333,8 @@ class AtlasData
       data[dataIndex++] = blue;
       data[dataIndex++] = alpha;
     }
+    
+    // TODO: Find a way to use tint only once. I don't like sending tinting data 4 times.
     
     // Triangle 1, top-left
     data[dataIndex++] = x;
@@ -382,12 +398,17 @@ class AtlasData
 		red:Float, green:Float, blue:Float, alpha:Float, ?smooth:Bool)
 	{
 		if (smooth == null) smooth = Atlas.smooth;
-    var matrix:Matrix = HXP.matrix;
-    matrix.identity();
-    matrix.scale(scaleX, scaleY);
-    matrix.rotate( -angle * HXP.RAD);
-    matrix.translate(x, y);
-    prepareTileMatrix(rect, layer, matrix.tx, matrix.ty, matrix.a, matrix.b, matrix.c, matrix.d, red, green, blue, alpha, smooth);
+    // [scaleX, scaleY, 0, 0, tx, ty]
+    angle = -angle * HXP.rad;
+    var cos:Float = Math.cos(angle);
+    var sin:Float = Math.sin(angle);
+    prepareTileMatrix(rect, layer, x, y, scaleX * cos, scaleX * sin, -scaleY * sin, scaleY * cos, red, green, blue, alpha, smooth);
+    //var matrix:Matrix = HXP.matrix;
+    //matrix.identity();
+    //matrix.scale(scaleX, scaleY);
+    //matrix.rotate( -angle * HXP.RAD);
+    //matrix.translate(x, y);
+    //prepareTileMatrix(rect, layer, matrix.tx, matrix.ty, matrix.a, matrix.b, matrix.c, matrix.d, red, green, blue, alpha, smooth);
 	}
 
 	/**

@@ -60,7 +60,7 @@ class HardwareRenderer extends DisplayObject
     stateCoutns[stateNum] = state.count * 6;
     stateTextures[stateNum] = state.texture;
     stateBuffers[stateNum] = state.data;
-    stateOffsets[stateNum] = state.offset * 6 * 4;
+    stateOffsets[stateNum] = state.offset * 6 * 2;
     stateNum++;
   }
   
@@ -174,7 +174,7 @@ class HardwareRenderer extends DisplayObject
       gl.vertexAttribPointer(renderShader.data.aTexCoord.index, 2, gl.FLOAT, false, 8 * Float32Array.BYTES_PER_ELEMENT, 2 * Float32Array.BYTES_PER_ELEMENT);
       gl.vertexAttribPointer(renderShader.data.aColor.index, 4, gl.FLOAT, false, 8 * Float32Array.BYTES_PER_ELEMENT, 4 * Float32Array.BYTES_PER_ELEMENT);
       
-      gl.drawElements(gl.TRIANGLES, stateCoutns[i], gl.UNSIGNED_INT, stateOffsets[i]);
+      gl.drawElements(gl.TRIANGLES, stateCoutns[i], gl.UNSIGNED_SHORT, stateOffsets[i]);
       
       i++;
     }
