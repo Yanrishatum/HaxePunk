@@ -399,7 +399,7 @@ class AtlasData
 	{
 		if (smooth == null) smooth = Atlas.smooth;
     // [scaleX, scaleY, 0, 0, tx, ty]
-    angle = -angle * HXP.rad;
+    angle = -angle * HXP.RAD;
     var cos:Float = Math.cos(angle);
     var sin:Float = Math.sin(angle);
     prepareTileMatrix(rect, layer, x, y, scaleX * cos, scaleX * sin, -scaleY * sin, scaleY * cos, red, green, blue, alpha, smooth);
