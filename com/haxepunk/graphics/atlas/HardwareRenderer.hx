@@ -119,13 +119,21 @@ class HardwareRenderer extends DisplayObject
       transMatrix[i] = m[i];
       i++;
     }
-    renderSession.shaderManager.setShader(renderShader);
-    //gl.enable(gl.BLEND);
-    //renderSession.blendModeManager.setBlendMode(cast 10);
+    var shader:Shader = renderShader;
+    
+    inline function applyShader():Void
+    {
+      //shader.data.uMatrix.value = transMatrix;
+      //shader.data.uAlpha.value = this.__worldAlpha;
+      renderSession.shaderManager.setShader(shader);
+      gl.uniform1f(renderShader.data.uAlpha.index, this.__worldAlpha);
+      gl.uniformMatrix4fv(renderShader.data.uMatrix.index, false, transMatrix);
+    }
+    applyShader();
     gl.blendEquation(gl.FUNC_ADD);
     gl.blendFuncSeparate(gl.ONE, gl.ONE_MINUS_SRC_ALPHA, gl.SRC_ALPHA, gl.ZERO);
-    gl.uniform1f(renderShader.data.uAlpha.index, this.__worldAlpha);
-    gl.uniformMatrix4fv(renderShader.data.uMatrix.index, false, transMatrix);
+    //gl.enable(gl.BLEND);
+    //renderSession.blendModeManager.setBlendMode(cast 10);
     //gl.uniformMatrix4fv (shader.data.uMatrix.index, false, renderer.getMatrix (tilemap.__worldTransform));
     
     var blend:Int = 10;
@@ -142,6 +150,15 @@ class HardwareRenderer extends DisplayObject
         renderSession.blendModeManager.setBlendMode(cast (state.blend)); // BlendMode is Int abstract, should work?
         blend = state.blend;
         //if (blend != 10) trace(blend);
+      }
+      
+      if (state.shader != shader && !(state.shader == null && shader == renderShader))
+      {
+        //trace('New shader! ${shader} -> ${state.shader}');
+        if (state.shader == null) shader = renderShader;
+        else shader = state.shader;
+        //renderSession.shaderManager.setShader(shader);
+        applyShader();
       }
       
       if (texture != stateTextures[i])
@@ -177,6 +194,7 @@ class HardwareRenderer extends DisplayObject
       gl.drawElements(gl.TRIANGLES, stateCoutns[i], gl.UNSIGNED_SHORT, stateOffsets[i]);
       
       i++;
+      state.reset();
     }
     if (onRender != null)
     {

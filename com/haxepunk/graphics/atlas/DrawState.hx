@@ -4,6 +4,7 @@ import lime.graphics.opengl.GLBuffer;
 import lime.utils.Float32Array;
 import lime.utils.UInt32Array;
 import openfl.display.BitmapData;
+import openfl.display.Shader;
 import openfl.display.Tile;
 import openfl.display.Tilemap;
 //import openfl.display.TilemapLayer;
@@ -17,7 +18,7 @@ class DrawState
 	private static var drawHead:DrawState;
 	private static var drawTail:DrawState;
   
-	private static function getState(data:AtlasData, texture:BitmapData, smooth:Bool, blend:Int):DrawState
+	private static function getState(data:AtlasData, texture:BitmapData, smooth:Bool, blend:Int, shader:Shader):DrawState
 	{
 		var state:DrawState = null;
 		
@@ -32,7 +33,7 @@ class DrawState
 			state = new DrawState();
 		}
 		
-		state.set(data, texture, smooth, blend);
+		state.set(data, texture, smooth, blend, shader);
 		return state;
 	}
 	
@@ -59,32 +60,33 @@ class DrawState
 			state = next;
 			next = state.next;
       state.render(scene);
-      state.reset();
+      //state.reset();
+      DrawState.putState(state);
 		}
     
 		drawHead = null;
 		drawTail = null;
 	}
 	
-	public static function getDrawState(data:AtlasData, texture:BitmapData, smooth:Bool, blend:Int):DrawState
+	public static function getDrawState(data:AtlasData, texture:BitmapData, smooth:Bool, blend:Int, shader:Shader):DrawState
 	{
 		var state:DrawState = null;
 		if (drawTail != null)
 		{
-			if (drawTail.data == data && drawTail.texture == texture && drawTail.smooth == smooth && drawTail.blend == blend)
+			if (drawTail.data == data && drawTail.texture == texture && drawTail.smooth == smooth && drawTail.blend == blend && drawTail.shader == shader)
 			{
 				return drawTail;
 			}
 			else
 			{
-				state = getState(data, texture, smooth, blend);
+				state = getState(data, texture, smooth, blend, shader);
 				drawTail.next = state;
 				drawTail = state;
 			}
 		}
 		else
 		{
-			state = getState(data, texture, smooth, blend);
+			state = getState(data, texture, smooth, blend, shader);
 			drawTail = drawHead = state;
 		}
     
@@ -104,6 +106,8 @@ class DrawState
   public var texture:BitmapData;
   public var data:AtlasData;
   
+  public var shader:Shader;
+  
 	public function new() 
 	{
     
@@ -116,16 +120,18 @@ class DrawState
     texture = null;
     data = null;
 		next = null;
-		DrawState.putState(this);
+    shader = null;
+		//DrawState.putState(this);
 	}
 	
-	public inline function set(data:AtlasData, texture:BitmapData, smooth:Bool, blend:Int):Void
+	public inline function set(data:AtlasData, texture:BitmapData, smooth:Bool, blend:Int, shader:Shader):Void
 	{
     this.data = data;
 		this.texture = texture;
 		this.smooth = smooth;
 		this.blend = blend;
     this.offset = data.bufferOffset;
+    this.shader = shader;
 	}
   
 	public inline function render(scene:Scene):Void

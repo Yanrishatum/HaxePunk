@@ -12,6 +12,7 @@ import lime.utils.Float32Array;
 import lime.utils.UInt16Array;
 import lime.utils.UInt32Array;
 import openfl.display.BlendMode;
+import openfl.display.Shader;
 import openfl.geom.Matrix;
 import openfl.display.Tile;
 import openfl.display.Tileset;
@@ -267,14 +268,14 @@ class AtlasData
 	 */
 	public inline function prepareTileMatrix(rect:Rectangle, layer:Int,
 		tx:Float, ty:Float, a:Float, b:Float, c:Float, d:Float,
-		red:Float, green:Float, blue:Float, alpha:Float, ?smooth:Bool)
+		red:Float, green:Float, blue:Float, alpha:Float, ?shader:Shader, ?smooth:Bool)
 	{
 		if (smooth == null) smooth = Atlas.smooth;
     
     //if (rect.width == 0 || rect.height == 0 || alpha == 0 || rect.right > width || rect.bottom > height || rect.top < 0 || rect.left < 0) throw "WUT";
     
     #if !display
-		var state:DrawState = DrawState.getDrawState(this, _texture, smooth, blend);
+		var state:DrawState = DrawState.getDrawState(this, _texture, smooth, blend, shader);
     ensureElement();
     
 		var data:Float32Array = buffer;
@@ -295,6 +296,16 @@ class AtlasData
     //__transformY: px * b + py * d + ty
     
     // Position
+    #if hp_round_coords
+    var x :Float = Math.fround(tx);                   // Top-left
+    var y :Float = Math.fround(ty);                   
+    var x2:Float = Math.fround(a * rect.width + tx);  // Top-right
+    var y2:Float = Math.fround(b * rect.width + ty);
+    var x3:Float = Math.fround(c * rect.height + tx); // Bottom-left
+    var y3:Float = Math.fround(d * rect.height + ty);
+    var x4:Float = Math.fround(x2 + c * rect.height); // Bottom-right
+    var y4:Float = Math.fround(y2 + d * rect.height);
+    #else
     var x :Float = tx;                   // Top-left
     var y :Float = ty;                   
     var x2:Float = a * rect.width + tx;  // Top-right
@@ -303,6 +314,7 @@ class AtlasData
     var y3:Float = d * rect.height + ty;
     var x4:Float = x2 + c * rect.height; // Bottom-right
     var y4:Float = y2 + d * rect.height;
+    #end
     //var x :Float = matrix.__transformX(0, 0); // Top-left
     //var y :Float = matrix.__transformY(0, 0);
     //var x2:Float = matrix.__transformX(rect.width, 0); // Top-right
@@ -395,14 +407,14 @@ class AtlasData
 	 */
 	public inline function prepareTile(rect:Rectangle, x:Float, y:Float, layer:Int,
 		scaleX:Float, scaleY:Float, angle:Float,
-		red:Float, green:Float, blue:Float, alpha:Float, ?smooth:Bool)
+		red:Float, green:Float, blue:Float, alpha:Float, ?shader:Shader, ?smooth:Bool)
 	{
 		if (smooth == null) smooth = Atlas.smooth;
     // [scaleX, scaleY, 0, 0, tx, ty]
     angle = -angle * HXP.RAD;
     var cos:Float = Math.cos(angle);
     var sin:Float = Math.sin(angle);
-    prepareTileMatrix(rect, layer, x, y, scaleX * cos, scaleX * sin, -scaleY * sin, scaleY * cos, red, green, blue, alpha, smooth);
+    prepareTileMatrix(rect, layer, x, y, scaleX * cos, scaleX * sin, -scaleY * sin, scaleY * cos, red, green, blue, alpha, shader, smooth);
     //var matrix:Matrix = HXP.matrix;
     //matrix.identity();
     //matrix.scale(scaleX, scaleY);

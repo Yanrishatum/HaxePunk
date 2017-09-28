@@ -26,13 +26,16 @@ class Draw
 	 * apply to Draw.line(), but will apply to Draw.linePlus().
 	 */
 	public static var blend:BlendMode;
+  
+  public static var sprite:Sprite;
 
 	@:dox(hide)
 	public static function init()
 	{
+    if (_graphics != null) return;
 		if (HXP.renderMode == RenderMode.HARDWARE)
 		{
-			var sprite = new Sprite();
+			sprite = new Sprite();
 			HXP.stage.addChild(sprite);
 			_graphics = sprite.graphics;
 		}

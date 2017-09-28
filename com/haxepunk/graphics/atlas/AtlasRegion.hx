@@ -3,6 +3,7 @@ package com.haxepunk.graphics.atlas;
 import flash.geom.Rectangle;
 import flash.geom.Point;
 import flash.geom.Matrix;
+import openfl.display.Shader;
 import openfl.display.Tile;
 
 class AtlasRegion
@@ -75,12 +76,12 @@ class AtlasRegion
 	 */
 	public inline function draw(x:Float, y:Float, layer:Int,
 		scaleX:Float=1, scaleY:Float=1, angle:Float=0,
-		red:Float=1, green:Float=1, blue:Float=1, alpha:Float=1, ?smooth:Bool)
+		red:Float=1, green:Float=1, blue:Float=1, alpha:Float=1, ?shader:Shader, ?smooth:Bool)
 	{
 		if (smooth == null) smooth = Atlas.smooth;
 		if (rotated) angle = angle + 90;
 
-		_parent.prepareTile(_rect, x, y, layer, scaleX, scaleY, angle, red, green, blue, alpha, smooth);
+		_parent.prepareTile(_rect, x, y, layer, scaleX, scaleY, angle, red, green, blue, alpha, shader, smooth);
 	}
 
 	/**
@@ -98,7 +99,7 @@ class AtlasRegion
 	 * @param  alpha Alpha value
 	 */
 	public inline function drawMatrix(tx:Float, ty:Float, a:Float, b:Float, c:Float, d:Float,
-		layer:Int, red:Float=1, green:Float=1, blue:Float=1, alpha:Float=1, ?smooth:Bool)
+		layer:Int, red:Float=1, green:Float=1, blue:Float=1, alpha:Float=1, ?shader:Shader, ?smooth:Bool)
 	{
 		if (smooth == null) smooth = Atlas.smooth;
     //var x:Float = HXP.screen.fullScaleX;
@@ -111,11 +112,11 @@ class AtlasRegion
 			matrix.rotate(90 * HXP.RAD);
 			_parent.prepareTileMatrix(_rect, layer,
 				matrix.tx, matrix.ty, matrix.a, matrix.b, matrix.c, matrix.d,
-				red, green, blue, alpha, smooth);
+				red, green, blue, alpha, shader, smooth);
 		}
 		else
 		{
-			_parent.prepareTileMatrix(_rect, layer, tx, ty, a, b, c, d, red, green, blue, alpha, smooth);
+			_parent.prepareTileMatrix(_rect, layer, tx, ty, a, b, c, d, red, green, blue, alpha, shader, smooth);
 		}
 	}
 
