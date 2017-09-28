@@ -1,5 +1,6 @@
 package com.haxepunk.graphics.atlas;
 import lime.graphics.GLRenderContext;
+import lime.math.Matrix4;
 import lime.utils.Float32Array;
 import lime.utils.UInt32Array;
 import openfl.display.BitmapData;
@@ -21,30 +22,23 @@ class HardwareRenderer extends DisplayObject
 {
   
   //public static inline var TILE_SIZE:Int = 48;
-  public static inline var TILE_SIZE:Int = 8 * 4;
+  public static inline var TILE_SIZE:Int = 8 * Float32Array.BYTES_PER_ELEMENT;
   public static inline var MINIMUM_TILE_COUNT_PER_BUFFER:Int = 10;
   
   public static var onRender:Void->Void;
+  
   private static var renderShader:TileShader;
   
   private var states:Array<DrawState>;
-  private var stateTextures:Array<BitmapData>;
-  private var stateBuffers:Array<AtlasData>;
-  private var stateCoutns:Array<Int>;
-  private var stateOffsets:Array<Int>;
   private var stateNum:Int;
-  private var transMatrix:Float32Array;
+  private var transMatrix:Matrix4;
   
   public function new ()
   {
     super();
-    transMatrix = new Float32Array(16);
+    transMatrix = new Matrix4();
     if (renderShader == null) renderShader = new TileShader();
     states = new Array();
-    stateTextures = new Array();
-    stateBuffers = new Array();
-    stateCoutns = new Array();
-    stateOffsets = new Array();
     stateNum = 0;
   }
   
@@ -56,12 +50,9 @@ class HardwareRenderer extends DisplayObject
   
   public function drawTiles(state:DrawState):Void
   {
-    states[stateNum] =  state;
-    stateCoutns[stateNum] = state.count * 6;
-    stateTextures[stateNum] = state.texture;
-    stateBuffers[stateNum] = state.data;
-    stateOffsets[stateNum] = state.offset * 6 * 2;
-    stateNum++;
+    state.count *= 6;
+    state.offset *= (6 * 2);
+    states[stateNum++] =  state;
   }
   
   #if !display
@@ -109,16 +100,26 @@ class HardwareRenderer extends DisplayObject
     var renderer:GLRenderer = cast renderSession.renderer;
     
     var i:Int = 0;
+    
     var m:Array<Float> = renderer.getMatrix(this.__worldTransform);
+    
     #if !hp_disable_autoscaling
     scaleX = HXP.screen.fullScaleY;
     scaleY = HXP.screen.fullScaleY;
     #end
-    while (i < 16)
-    {
-      transMatrix[i] = m[i];
-      i++;
-    }
+    
+    var matA:Matrix = this.__worldTransform;
+    var matB:Matrix = @:privateAccess this.stage.__displayMatrix;
+    
+    transMatrix.identity();
+    transMatrix[ 0] = matA.a  * matB.a + matA.b  * matB.c;
+    transMatrix[ 1] = matA.a  * matB.b + matA.b  * matB.d;
+    transMatrix[ 4] = matA.c  * matB.a + matA.d  * matB.c;
+    transMatrix[ 5] = matA.c  * matB.b + matA.d  * matB.d;
+    transMatrix[12] = matA.tx * matB.a + matA.ty * matB.c + matB.tx;
+    transMatrix[13] = matA.tx * matB.b + matA.ty * matB.d + matB.ty;
+    transMatrix.append(@:privateAccess renderer.flipped ? renderer.projectionFlipped : renderer.projection);
+    
     var shader:Shader = renderShader;
     
     inline function applyShader():Void
@@ -143,13 +144,12 @@ class HardwareRenderer extends DisplayObject
     while (i < stateNum)
     {
       var state:DrawState = states[i];
-      var data:AtlasData = stateBuffers[i];
+      var data:AtlasData = state.data;
       
       if (blend != state.blend)
       {
         renderSession.blendModeManager.setBlendMode(cast (state.blend)); // BlendMode is Int abstract, should work?
         blend = state.blend;
-        //if (blend != 10) trace(blend);
       }
       
       if (state.shader != shader && !(state.shader == null && shader == renderShader))
@@ -161,9 +161,9 @@ class HardwareRenderer extends DisplayObject
         applyShader();
       }
       
-      if (texture != stateTextures[i])
+      if (texture != state.texture)
       {
-        texture = stateTextures[i];
+        texture = state.texture;
         gl.bindTexture (gl.TEXTURE_2D, texture.getTexture (gl));
       }
       
@@ -191,7 +191,7 @@ class HardwareRenderer extends DisplayObject
       gl.vertexAttribPointer(renderShader.data.aTexCoord.index, 2, gl.FLOAT, false, 8 * Float32Array.BYTES_PER_ELEMENT, 2 * Float32Array.BYTES_PER_ELEMENT);
       gl.vertexAttribPointer(renderShader.data.aColor.index, 4, gl.FLOAT, false, 8 * Float32Array.BYTES_PER_ELEMENT, 4 * Float32Array.BYTES_PER_ELEMENT);
       
-      gl.drawElements(gl.TRIANGLES, stateCoutns[i], gl.UNSIGNED_SHORT, stateOffsets[i]);
+      gl.drawElements(gl.TRIANGLES, state.count, gl.UNSIGNED_SHORT, state.offset);
       
       i++;
       state.reset();

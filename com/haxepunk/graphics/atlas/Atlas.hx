@@ -3,6 +3,7 @@ package com.haxepunk.graphics.atlas;
 import com.haxepunk.graphics.atlas.AtlasData;
 import flash.display.Sprite;
 import flash.geom.Rectangle;
+import openfl.display.Shader;
 
 class Atlas
 {
@@ -64,10 +65,17 @@ class Atlas
 	 */
 	public inline function prepareTile(rect:Rectangle, x:Float, y:Float, layer:Int,
 		scaleX:Float, scaleY:Float, angle:Float,
-		red:Float, green:Float, blue:Float, alpha:Float, ?smooth:Bool)
+		red:Float, green:Float, blue:Float, alpha:Float, ?shader:Shader, ?smooth:Bool)
 	{
-		_data.prepareTile(rect, x, y, layer, scaleX, scaleY, angle, red, green, blue, alpha, smooth);
+		_data.prepareTile(rect, x, y, layer, scaleX, scaleY, angle, red, green, blue, alpha, shader, smooth);
 	}
+  
+  public inline function prepareTileMatrix(rect:Rectangle, layer:Int,
+		tx:Float, ty:Float, a:Float, b:Float, c:Float, d:Float,
+		red:Float, green:Float, blue:Float, alpha:Float, ?shader:Shader, ?smooth:Bool)
+  {
+    _data.prepareTileMatrix(rect, layer, tx, ty, a, b, c, d, red, green, blue, alpha, shader, smooth);
+  }
 
 	/**
 	 * How many Atlases are active.
