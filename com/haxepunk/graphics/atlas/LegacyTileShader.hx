@@ -6,7 +6,7 @@ import openfl.gl.GL;
  * ...
  * @author Yanrishatum
  */
-class TileShader extends Shader
+class LegacyTileShader extends Shader
 {
 
   @:glVertexSource(
@@ -34,7 +34,7 @@ class TileShader extends Shader
 			
 			void main(void) {
 				
-        vec4 color = texelFetch (uImage0, ivec2(vTexCoord), 0);
+				vec4 color = texture2D (uImage0, vTexCoord);
         if (color.a == 0.0)
         {
           gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);

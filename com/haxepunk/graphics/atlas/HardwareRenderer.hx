@@ -1,8 +1,14 @@
 package com.haxepunk.graphics.atlas;
 import lime.graphics.GLRenderContext;
+import lime.graphics.opengl.GL;
+import lime.graphics.opengl.GLBuffer;
+import lime.graphics.opengl.GLFramebuffer;
+import lime.graphics.opengl.GLRenderbuffer;
+import lime.graphics.opengl.GLTexture;
 import lime.math.Matrix4;
 import lime.utils.Float32Array;
 import lime.utils.UInt32Array;
+import openfl.Lib;
 import openfl.display.BitmapData;
 import openfl.display.BlendMode;
 import openfl.display.DisplayObject;
@@ -18,6 +24,7 @@ import openfl._internal.renderer.opengl.GLRenderer;
  * ...
  * @author Yanrishatum
  */
+@:access(openfl.display.Shader)
 class HardwareRenderer extends DisplayObject
 {
   
@@ -27,20 +34,120 @@ class HardwareRenderer extends DisplayObject
   
   public static var onRender:Void->Void;
   
-  private static var renderShader:TileShader;
+  private static var renderShader:Shader;
   
   private var states:Array<DrawState>;
   private var stateNum:Int;
   private var transMatrix:Matrix4;
   
+  #if hp_postprocess
+  private static var framebuffer:GLFramebuffer;
+  private static var postTexture:GLTexture;
+  private static var postRenderbuffer:GLRenderbuffer;
+  private static var postVertices:GLBuffer;
+  private static var defaultPostShader:PostprocessShader;
+  private static var framebufferInvalid:Bool;
+  public static var postShader:Shader;
+  
+  public static function invalidate():Void
+  {
+    framebufferInvalid = true;
+  }
+  #end
+  
   public function new ()
   {
     super();
     transMatrix = new Matrix4();
+    #if hp_gles2
+    if (renderShader == null) renderShader = new LegacyTileShader();
+    #else
     if (renderShader == null) renderShader = new TileShader();
+    #end
     states = new Array();
     stateNum = 0;
+    
+    #if hp_postprocess
+    defaultPostShader = new PostprocessShader();
+    #end
   }
+  
+  #if hp_postprocess
+  private function initFramebuffer(gl:GLRenderContext):Void
+  {
+    var err:Int;
+    inline function glErrCheck(name:String):Void
+    {
+      err = gl.getError();
+      if (err != 0) trace("[" + name + "] " + err);
+    }
+    
+    var w:Int = Lib.current.stage.stageWidth;
+    var h:Int = Lib.current.stage.stageHeight;
+    // Init texture
+    gl.activeTexture(gl.TEXTURE0);
+    postTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, postTexture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    
+    // Init renderbuffer
+    postRenderbuffer = gl.createRenderbuffer();
+    gl.bindRenderbuffer(gl.RENDERBUFFER, postRenderbuffer);
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, w, h);
+    gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+    
+    framebuffer = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, postTexture, 0);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, postRenderbuffer);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    
+    postVertices = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, postVertices);
+    var verts = new Float32Array([
+      -1.0, -1.0, 0, 0,
+			 1.0, -1.0, 1, 0,
+			-1.0,  1.0, 0, 1,
+			 1.0, -1.0, 1, 0,
+			 1.0,  1.0, 1, 1,
+			-1.0,  1.0, 0, 1]);
+    gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, postVertices);
+    
+  }
+  
+  public function resize():Void
+  {
+    var w:Int = Lib.current.stage.stageWidth;
+    var h:Int = Lib.current.stage.stageHeight;
+    GL.bindTexture(GL.TEXTURE_2D, postTexture);
+    GL.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, w, h, 0, GL.RGBA, GL.UNSIGNED_BYTE, null);
+    GL.bindTexture(GL.TEXTURE_2D, null);
+    
+    GL.bindRenderbuffer(GL.RENDERBUFFER, postRenderbuffer);
+    GL.renderbufferStorage(GL.RENDERBUFFER, GL.DEPTH_COMPONENT16, w, h);
+    GL.bindRenderbuffer(GL.RENDERBUFFER, null);
+    
+    framebufferInvalid = false;
+  }
+  
+  #if !display
+  override function __cleanup():Void 
+  {
+    super.__cleanup();
+    GL.deleteRenderbuffer(postRenderbuffer);
+    GL.deleteTexture(postTexture);
+    GL.deleteFramebuffer(framebuffer);
+    GL.deleteBuffer(postVertices);
+  }
+  #end
+  
+  #end
   
   public function clear():Void
   {
@@ -60,9 +167,9 @@ class HardwareRenderer extends DisplayObject
   @:access(openfl.geom.Rectangle)
   override function __getBounds(rect:Rectangle, matrix:Matrix):Void 
   {
-		var bounds:Rectangle = Rectangle.__temp;
-		bounds.setTo (0, 0, HXP.width, HXP.height);
-		bounds.__transform (bounds, matrix);
+    var bounds:Rectangle = Rectangle.__temp;
+    bounds.setTo (0, 0, HXP.width, HXP.height);
+    bounds.__transform (bounds, matrix);
     rect.__expand(bounds.x, bounds.y, bounds.width, bounds.height);
   }
   
@@ -99,9 +206,28 @@ class HardwareRenderer extends DisplayObject
     var gl:GLRenderContext = renderSession.gl;
     var renderer:GLRenderer = cast renderSession.renderer;
     
+    var err:Int;
+    inline function glErrCheck(name:String):Void
+    {
+      err = gl.getError();
+      if (err != 0) trace("[" + name + "] " + err);
+    }
+    
+    #if hp_postprocess
+    //#if debug
+    //gl.getError(); // 1281 by some reason always?
+    //#end
+    if (framebuffer == null) initFramebuffer(gl);
+    if (framebufferInvalid) resize();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+    var c:Int = HXP.screen.color;
+    gl.clearColor(((c & 0xff0000) >> 16) / 0xff, ((c & 0xff00) >> 8) /  0xff, (c & 0xff) / 0xff, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    #end
+    
     var i:Int = 0;
     
-    var m:Array<Float> = renderer.getMatrix(this.__worldTransform);
+    //var m:Array<Float> = renderer.getMatrix(this.__worldTransform);
     
     #if !hp_disable_autoscaling
     scaleX = HXP.screen.fullScaleY;
@@ -180,7 +306,7 @@ class HardwareRenderer extends DisplayObject
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, data.indexes, gl.DYNAMIC_DRAW);
       }
       
-			gl.bindBuffer(gl.ARRAY_BUFFER, data.glBuffer);
+      gl.bindBuffer(gl.ARRAY_BUFFER, data.glBuffer);
       if (data.vertexBufferDirty)
       {
         data.vertexBufferDirty = false;
@@ -196,6 +322,43 @@ class HardwareRenderer extends DisplayObject
       i++;
       state.reset();
     }
+    
+    #if hp_postprocess
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    
+    var shader:Shader = postShader != null ? postShader : defaultPostShader;
+    if (shader.gl == null)
+    {
+      shader.gl = gl;
+      shader.__init();
+    }
+    
+    gl.enable(GL.TEXTURE_2D);
+    gl.bindTexture(gl.TEXTURE_2D, postTexture);
+    gl.useProgram(shader.glProgram);
+    //glErrCheck("glShader:useProgram");
+    shader.__enable();
+    shader.__update();
+    
+    gl.uniform1i(shader.data.uImage0.index, 0);
+    
+    //glErrCheck("glShader:uImage0");
+    //gl.uniformMatrix4fv(shader.data.uMatrix.index, false, transMatrix);
+    gl.enableVertexAttribArray(shader.data.aTexCoord.index);
+    
+    gl.bindBuffer(gl.ARRAY_BUFFER, postVertices);
+    gl.vertexAttribPointer(shader.data.aPosition.index, 2, gl.FLOAT, false, 4 * Float32Array.BYTES_PER_ELEMENT, 0);
+    gl.vertexAttribPointer(shader.data.aTexCoord.index, 2, gl.FLOAT, false, 4 * Float32Array.BYTES_PER_ELEMENT, 2 * Float32Array.BYTES_PER_ELEMENT);
+    
+    gl.drawArrays(GL.TRIANGLES, 0, 6);
+    
+    shader.__disable();
+    gl.useProgram(null);
+    
+    #end
+    
     if (onRender != null)
     {
       gl.finish();

@@ -282,10 +282,17 @@ class AtlasData
 		var dataIndex:Int = bufferOffset * HardwareRenderer.TILE_SIZE;
     
     // UV
+    #if hp_gles2
     var uvx:Float = (rect.x) / _texture.width;
     var uvy:Float = (rect.y) / _texture.height;
     var uvx2:Float = (rect.right) / _texture.width;
     var uvy2:Float = (rect.bottom) / _texture.height;
+    #else
+    var uvx:Float = rect.x; // (rect.x) / _texture.width;
+    var uvy:Float = rect.y; // (rect.y) / _texture.height;
+    var uvx2:Float = rect.right; // (rect.right) / _texture.width;
+    var uvy2:Float = rect.bottom; // (rect.bottom) / _texture.height;
+    #end
     
     // Transformed position
     //var matrix:Matrix = HXP.matrix;

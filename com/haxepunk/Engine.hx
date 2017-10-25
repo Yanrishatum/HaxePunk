@@ -1,5 +1,6 @@
 package com.haxepunk;
 
+import com.haxepunk.graphics.atlas.HardwareRenderer;
 import flash.display.Bitmap;
 import flash.display.BitmapData;
 import flash.display.Sprite;
@@ -187,6 +188,9 @@ class Engine extends Sprite
 		// set resize event
 		HXP.stage.addEventListener(Event.RESIZE, function (e:Event) {
 			resize();
+      #if hp_postprocess
+      HardwareRenderer.invalidate();
+      #end
 		});
 
 		HXP.stage.addEventListener(Event.ACTIVATE, function (e:Event) {
