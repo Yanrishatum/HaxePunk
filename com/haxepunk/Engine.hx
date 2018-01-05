@@ -225,9 +225,19 @@ class Engine extends Sprite
 		// calculate scale from width/height values
 		HXP.windowWidth = HXP.stage.stageWidth;
 		HXP.windowHeight = HXP.stage.stageHeight;
-		HXP.screen.scaleX = HXP.stage.stageWidth / HXP.width;
-		HXP.screen.scaleY = HXP.stage.stageHeight / HXP.height;
-		HXP.resize(HXP.stage.stageWidth, HXP.stage.stageHeight);
+    if (HXP.screen.keepAspectRatio)
+    {
+      var min:Float = Math.min(HXP.stage.stageWidth / HXP.width, HXP.stage.stageHeight / HXP.height);
+      HXP.screen.scaleX = min;
+      HXP.screen.scaleY = min;
+      HXP.screen.resize();
+    }
+    else
+    {
+      HXP.screen.scaleX = HXP.stage.stageWidth / HXP.width;
+      HXP.screen.scaleY = HXP.stage.stageHeight / HXP.height;
+      HXP.resize(HXP.stage.stageWidth, HXP.stage.stageHeight);
+    }
 	}
 
 	/** @private Event handler for stage entry. */

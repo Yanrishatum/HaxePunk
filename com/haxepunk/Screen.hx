@@ -227,7 +227,23 @@ class Screen
 		updateTransformation();
 		return originY;
 	}
-
+  
+  #if hp_disable_autoscaling
+  public var keepAspectRatio(default, set):Bool = false;
+  #else
+  public var keepAspectRatio(default, set):Bool = true;
+  #end
+  private function set_keepAspectRatio(value:Bool):Bool
+  {
+    if (value == keepAspectRatio) return value;
+    if (value)
+    {
+      if (scaleX < scaleY) scaleY = scaleX;
+      else scaleX = scaleY;
+    }
+    return keepAspectRatio = value;
+  }
+  
 	/**
 	 * X scale of the screen.
 	 */

@@ -230,7 +230,7 @@ class HardwareRenderer extends DisplayObject
     //var m:Array<Float> = renderer.getMatrix(this.__worldTransform);
     
     #if !hp_disable_autoscaling
-    scaleX = HXP.screen.fullScaleY;
+    scaleX = HXP.screen.fullScaleX;
     scaleY = HXP.screen.fullScaleY;
     #end
     
