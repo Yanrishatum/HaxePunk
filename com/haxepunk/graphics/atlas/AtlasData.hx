@@ -104,54 +104,6 @@ class AtlasData
 		height = bd.height;
 	}
   
-  private function ensureElement():Void
-  {
-    if (buffer == null)
-    {
-      bufferSize = HardwareRenderer.MINIMUM_TILE_COUNT_PER_BUFFER;
-      buffer = new Float32Array(HardwareRenderer.MINIMUM_TILE_COUNT_PER_BUFFER * HardwareRenderer.TILE_SIZE);
-      indexes = new UInt16Array(HardwareRenderer.MINIMUM_TILE_COUNT_PER_BUFFER * 6);
-      
-      fillIndexBuffer();
-    }
-    else if (bufferOffset >= bufferSize)
-    {
-      var oldBuffer:Float32Array = buffer;
-      
-      bufferSize += HardwareRenderer.MINIMUM_TILE_COUNT_PER_BUFFER;
-      buffer = new Float32Array(bufferSize * HardwareRenderer.TILE_SIZE);
-      indexes = new UInt16Array(bufferSize * 6);
-      
-      var i:Int = 0;
-      while (i < oldBuffer.length)
-      {
-        buffer[i] = oldBuffer[i];
-        i++;
-      }
-      
-      fillIndexBuffer();
-    }
-  }
-  
-  private inline function fillIndexBuffer():Void
-  {
-    var i:Int = 0;
-    var vertexOffset:Int = 0;
-    while (i < indexes.length)
-    {
-      indexes[i    ] = vertexOffset;//0;
-      indexes[i + 1] = vertexOffset + 1;
-      indexes[i + 2] = vertexOffset + 2;
-      indexes[i + 3] = vertexOffset + 2;
-      indexes[i + 4] = vertexOffset + 1;
-      indexes[i + 5] = vertexOffset + 3;
-      vertexOffset += 4;
-      i += 6;
-    }
-    //trace("[INFO] Atlas index buffer size and offset now: " + vertexOffset, indexes.length);
-    indexBufferDirty = true;
-  }
-  
 	/**
 	 * Get's the atlas data for a specific texture, useful for setting rendering flags
 	 * @param	name	The name of the image file
@@ -203,17 +155,13 @@ class AtlasData
 	{
 		_scene = scene;
     _scene.tilemap.clear();
-    for (atlas in _atlases)
-    {
-      atlas.bufferOffset = 0;
-    }
 		//_scene.sprite.graphics.clear();
 	}
 	
 	@:allow(com.haxepunk.Scene)
 	private static inline function drawScene(scene:Scene):Void
 	{
-		DrawState.drawStates(scene);
+		//DrawState.drawStates(scene);
 	}
 
 	/**
@@ -266,136 +214,13 @@ class AtlasData
 	 * @param  blue  Blue color value
 	 * @param  alpha Alpha value
 	 */
+  //private static var _t:Array<Tile> = new Array();
+  
 	public inline function prepareTileMatrix(rect:Rectangle, layer:Int,
 		tx:Float, ty:Float, a:Float, b:Float, c:Float, d:Float,
 		red:Float, green:Float, blue:Float, alpha:Float, ?shader:Shader, ?smooth:Bool)
 	{
-		if (smooth == null) smooth = Atlas.smooth;
-    
-    //if (rect.width == 0 || rect.height == 0 || alpha == 0 || rect.right > width || rect.bottom > height || rect.top < 0 || rect.left < 0) throw "WUT";
-    
-    #if !display
-		var state:DrawState = DrawState.getDrawState(this, _texture, smooth, blend, shader);
-    ensureElement();
-    
-		var data:Float32Array = buffer;
-		var dataIndex:Int = bufferOffset * HardwareRenderer.TILE_SIZE;
-    
-    // UV
-    #if hp_gles2
-    var uvx:Float = (rect.x) / _texture.width;
-    var uvy:Float = (rect.y) / _texture.height;
-    var uvx2:Float = (rect.right) / _texture.width;
-    var uvy2:Float = (rect.bottom) / _texture.height;
-    #else
-    var uvx:Float = rect.x; // (rect.x) / _texture.width;
-    var uvy:Float = rect.y; // (rect.y) / _texture.height;
-    var uvx2:Float = rect.right; // (rect.right) / _texture.width;
-    var uvy2:Float = rect.bottom; // (rect.bottom) / _texture.height;
-    #end
-    
-    // Transformed position
-    //var matrix:Matrix = HXP.matrix;
-    //matrix.setTo(a, b, c, d, tx, ty);
-    
-    // px/py: inputs
-    //__transformX: px * a + py * c + tx
-    //__transformY: px * b + py * d + ty
-    
-    // Position
-    #if hp_round_coords
-    var x :Float = Math.fround(tx);                   // Top-left
-    var y :Float = Math.fround(ty);                   
-    var x2:Float = Math.fround(a * rect.width + tx);  // Top-right
-    var y2:Float = Math.fround(b * rect.width + ty);
-    var x3:Float = Math.fround(c * rect.height + tx); // Bottom-left
-    var y3:Float = Math.fround(d * rect.height + ty);
-    var x4:Float = Math.fround(x2 + c * rect.height); // Bottom-right
-    var y4:Float = Math.fround(y2 + d * rect.height);
-    #else
-    var x :Float = tx;                   // Top-left
-    var y :Float = ty;                   
-    var x2:Float = a * rect.width + tx;  // Top-right
-    var y2:Float = b * rect.width + ty;
-    var x3:Float = c * rect.height + tx; // Bottom-left
-    var y3:Float = d * rect.height + ty;
-    var x4:Float = x2 + c * rect.height; // Bottom-right
-    var y4:Float = y2 + d * rect.height;
-    #end
-    //var x :Float = matrix.__transformX(0, 0); // Top-left
-    //var y :Float = matrix.__transformY(0, 0);
-    //var x2:Float = matrix.__transformX(rect.width, 0); // Top-right
-    //var y2:Float = matrix.__transformY(rect.width, 0);
-    //var x3:Float = matrix.__transformX(0, rect.height); // Bottom-left
-    //var y3:Float = matrix.__transformY(0, rect.height);
-    //var x4:Float = matrix.__transformX(rect.width, rect.height); // Bottom-right
-    //var y4:Float = matrix.__transformY(rect.width, rect.height);
-    
-    // Set values
-    if (!isRGB)
-    {
-      red = 1;
-      green = 1;
-      blue = 1;
-    }
-    if (!isAlpha) alpha = 1;
-    else
-    {
-      if (alpha < 0) alpha = 0;
-      else if (alpha > 1) alpha = 1;
-    }
-    
-    inline function fillTint():Void
-    {
-      data[dataIndex++] = red;
-      data[dataIndex++] = green;
-      data[dataIndex++] = blue;
-      data[dataIndex++] = alpha;
-    }
-    
-    // TODO: Find a way to use tint only once. I don't like sending tinting data 4 times.
-    
-    // Triangle 1, top-left
-    data[dataIndex++] = x;
-    data[dataIndex++] = y;
-    data[dataIndex++] = uvx;
-    data[dataIndex++] = uvy;
-    fillTint();
-    // Triangle 1, top-right
-    data[dataIndex++] = x2;
-    data[dataIndex++] = y2;
-    data[dataIndex++] = uvx2;
-    data[dataIndex++] = uvy;
-    fillTint();
-    // Triangle 1, bottom-left
-    data[dataIndex++] = x3;
-    data[dataIndex++] = y3;
-    data[dataIndex++] = uvx;
-    data[dataIndex++] = uvy2;
-    fillTint();
-    //// Triangle 2, bottom-left
-    //data[dataIndex++] = x3;
-    //data[dataIndex++] = y3;
-    //data[dataIndex++] = uvx;
-    //data[dataIndex++] = uvy2;
-    //fillTint();
-    //// Triangle 2, top-right
-    //data[dataIndex++] = x2;
-    //data[dataIndex++] = y2;
-    //data[dataIndex++] = uvx2;
-    //data[dataIndex++] = uvy;
-    //fillTint();
-    // Triangle 2, bottom-right
-    data[dataIndex++] = x4;
-    data[dataIndex++] = y4;
-    data[dataIndex++] = uvx2;
-    data[dataIndex++] = uvy2;
-    fillTint();
-    
-    bufferOffset++;
-    state.count++;
-    vertexBufferDirty = true;
-    #end
+    _scene.tilemap.drawTile(_texture, rect, tx, ty, a, b, c, d, red, green, blue, alpha, blend, shader, smooth == null ? Atlas.smooth : smooth);
 	}
 
 	/**

@@ -18,7 +18,7 @@ class DrawState
 	private static var drawHead:DrawState;
 	private static var drawTail:DrawState;
   
-	private static function getState(data:AtlasData, texture:BitmapData, smooth:Bool, blend:Int, shader:Shader):DrawState
+	private static function getState(screen:HWScreen, texture:BitmapData, smooth:Bool, blend:Int, shader:Shader):DrawState
 	{
 		var state:DrawState = null;
 		
@@ -33,7 +33,8 @@ class DrawState
 			state = new DrawState();
 		}
 		
-		state.set(data, texture, smooth, blend, shader);
+		state.set(screen.quadFilled, texture, smooth, blend, shader);
+    screen.states[screen.numStates++] = state;
 		return state;
 	}
 	
@@ -68,25 +69,25 @@ class DrawState
 		drawTail = null;
 	}
 	
-	public static function getDrawState(data:AtlasData, texture:BitmapData, smooth:Bool, blend:Int, shader:Shader):DrawState
+	public static function getDrawState(screen:HWScreen, texture:BitmapData, smooth:Bool, blend:Int, shader:Shader):DrawState
 	{
 		var state:DrawState = null;
 		if (drawTail != null)
 		{
-			if (drawTail.data == data && drawTail.texture == texture && drawTail.smooth == smooth && drawTail.blend == blend && drawTail.shader == shader)
+			if (drawTail.texture == texture && drawTail.smooth == smooth && drawTail.blend == blend && drawTail.shader == shader)
 			{
 				return drawTail;
 			}
 			else
 			{
-				state = getState(data, texture, smooth, blend, shader);
+				state = getState(screen, texture, smooth, blend, shader);
 				drawTail.next = state;
 				drawTail = state;
 			}
 		}
 		else
 		{
-			state = getState(data, texture, smooth, blend, shader);
+			state = getState(screen, texture, smooth, blend, shader);
 			drawTail = drawHead = state;
 		}
     
@@ -104,7 +105,6 @@ class DrawState
   public var count:Int = 0;
 	public var offset:Int = 0;
   public var texture:BitmapData;
-  public var data:AtlasData;
   
   public var shader:Shader;
   
@@ -118,19 +118,18 @@ class DrawState
 		offset = 0;
     count = 0;
     texture = null;
-    data = null;
 		next = null;
     shader = null;
-		//DrawState.putState(this);
+    
+		DrawState.putState(this);
 	}
-	
-	public inline function set(data:AtlasData, texture:BitmapData, smooth:Bool, blend:Int, shader:Shader):Void
+  
+	public inline function set(offset:Int, texture:BitmapData, smooth:Bool, blend:Int, shader:Shader):Void
 	{
-    this.data = data;
 		this.texture = texture;
 		this.smooth = smooth;
 		this.blend = blend;
-    this.offset = data.bufferOffset;
+    this.offset = offset * HWRenderer.INDEX_STRIDE;
     this.shader = shader;
 	}
   
@@ -138,6 +137,8 @@ class DrawState
 	{
     //trace(offset, count, offset + count, data.bufferSize);
     //if (offset + count >= data.bufferSize) throw "INVALID DATA";
-    scene.tilemap.drawTiles(this);
+    
+    // HardwareRenderer
+    //scene.tilemap.drawTiles(this);
 	}
 }

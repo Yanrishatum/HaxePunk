@@ -113,11 +113,11 @@ class Joystick
     this.axis[axisId] = value;
   }
   
-  private function onBallMove(id:Int, value:Float):Void
+  private function onBallMove(id:Int, x:Float, y:Float):Void
   {
     //trace("TRACKBALL: " + id + " = " + value);
-    if (id == 0) ball.x = value;
-    if (id == 1) ball.y = value;
+    ball.x = x;
+    ball.y = y;
   }
   
 	/**

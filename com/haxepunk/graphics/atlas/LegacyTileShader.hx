@@ -1,6 +1,5 @@
 package com.haxepunk.graphics.atlas;
 import openfl.display.Shader;
-import openfl.gl.GL;
 
 /**
  * ...

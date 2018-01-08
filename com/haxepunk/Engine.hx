@@ -1,6 +1,5 @@
 package com.haxepunk;
 
-import com.haxepunk.graphics.atlas.HardwareRenderer;
 import flash.display.Bitmap;
 import flash.display.BitmapData;
 import flash.display.Sprite;
@@ -146,20 +145,10 @@ class Engine extends Sprite
 		if (_frameLast == 0) _frameLast = Std.int(t);
 
 		// render loop
-		if (HXP.renderMode == RenderMode.BUFFER)
-		{
-			HXP.screen.swap();
-			HXP.screen.refresh();
-		}
 		Draw.resetTarget();
 
 		if (_scene.visible) _scene.render();
-
-		if (HXP.renderMode == RenderMode.BUFFER)
-		{
-			HXP.screen.redraw();
-		}
-
+    
 		// more timing stuff
 		t = Lib.getTimer();
 		_frameListSum += (_frameList[_frameList.length] = Std.int(t - _frameLast));
@@ -189,7 +178,7 @@ class Engine extends Sprite
 		HXP.stage.addEventListener(Event.RESIZE, function (e:Event) {
 			resize();
       #if hp_postprocess
-      HardwareRenderer.invalidate();
+      if (scene != null) scene.tilemap.invalidate();
       #end
 		});
 
@@ -197,6 +186,9 @@ class Engine extends Sprite
 			HXP.focused = true;
 			focusGained();
 			_scene.focusGained();
+      #if hp_postprocess
+      if (scene != null) scene.tilemap.invalidate();
+      #end
 		});
 
 		HXP.stage.addEventListener(Event.DEACTIVATE, function (e:Event) {
@@ -401,6 +393,10 @@ class Engine extends Sprite
 
 			_scene = _scenes.first();
 
+      #if hp_postprocess
+      _scene.tilemap.invalidate();
+      #end
+      
 			addChild(_scene.sprite);
 			HXP.camera = _scene.camera;
 			_scene.updateLists();

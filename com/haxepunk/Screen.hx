@@ -2,6 +2,7 @@ package com.haxepunk;
 
 import com.haxepunk.graphics.atlas.Atlas;
 import com.haxepunk.graphics.Image;
+import com.haxepunk.graphics.atlas.HWScreen;
 
 import flash.display.Bitmap;
 import flash.display.BitmapData;
@@ -24,10 +25,9 @@ class Screen
 	private function new()
 	{
 		_sprite = new Sprite();
-		_bitmap = new Array<Bitmap>();
 		init();
 	}
-
+  
 	public function init()
 	{
 		x = y = originX = originY = 0;
@@ -43,15 +43,6 @@ class Screen
 			HXP.engine.addChild(_sprite); // Если не добавить - Input на хардварке ломается.
 	}
 
-	private inline function disposeBitmap(bd:Bitmap)
-	{
-		if (bd != null)
-		{
-			_sprite.removeChild(bd);
-			bd.bitmapData.dispose();
-		}
-	}
-
 	/**
 	 * Resizes the screen by recreating the bitmap buffer.
 	 */
@@ -60,20 +51,7 @@ class Screen
 	{
 		width = HXP.width;
 		height = HXP.height;
-
-		if (HXP.renderMode == RenderMode.BUFFER)
-		{
-			disposeBitmap(_bitmap[0]);
-			disposeBitmap(_bitmap[1]);
-
-			_bitmap[0] = new Bitmap(HXP.createBitmap(width, height, true), PixelSnapping.NEVER);
-			_bitmap[1] = new Bitmap(HXP.createBitmap(width, height, true), PixelSnapping.NEVER);
-
-			_sprite.addChild(_bitmap[0]).visible = true;
-			_sprite.addChild(_bitmap[1]).visible = false;
-			HXP.buffer = _bitmap[0].bitmapData;
-		}
-
+    
 		_current = 0;
 		needsResize = false;
 	}
@@ -81,13 +59,9 @@ class Screen
 	/**
 	 * Swaps screen buffers.
 	 */
-	public function swap()
+	public inline function swap()
 	{
-		if (HXP.renderMode == RenderMode.BUFFER)
-		{
-			#if !bitfive _current = 1 - _current; #end
-			HXP.buffer = _bitmap[_current].bitmapData;
-		}
+    
 	}
 
 	/**
@@ -114,14 +88,9 @@ class Screen
 	/**
 	 * Redraws the screen.
 	 */
-	public function redraw()
+	public inline function redraw()
 	{
-		// refresh the buffers
-		if (HXP.renderMode == RenderMode.BUFFER)
-		{
-			_bitmap[_current].visible = true;
-			_bitmap[1 - _current].visible = false;
-		}
+    
 	}
 
 	/** @private Re-applies transformation matrix. */
@@ -323,26 +292,11 @@ class Screen
 	public var smoothing(get, set):Bool;
 	private function get_smoothing():Bool
 	{
-		if (HXP.renderMode == RenderMode.BUFFER)
-		{
-			return _bitmap[0].smoothing;
-		}
-		else
-		{
-			return Atlas.smooth;
-		}
+    return Atlas.smooth;
 	}
 	private function set_smoothing(value:Bool):Bool
 	{
-		if (HXP.renderMode == RenderMode.BUFFER)
-		{
-			_bitmap[0].smoothing = _bitmap[1].smoothing = value;
-		}
-		else
-		{
-			Atlas.smooth = value;
-		}
-		return value;
+    return Atlas.smooth = value;
 	}
 
 	/**
@@ -374,14 +328,7 @@ class Screen
 	 */
 	public function capture():Image
 	{
-		if (HXP.renderMode == RenderMode.BUFFER)
-		{
-			return new Image(_bitmap[_current].bitmapData.clone());
-		}
-		else
-		{
-			throw "Screen.capture only supported with buffer rendering";
-		}
+    throw "Screen.capture not supported";
 	}
 
 	/**
@@ -406,7 +353,6 @@ class Screen
 
 	// Screen infromation.
 	private var _sprite:Sprite;
-	private var _bitmap:Array<Bitmap>;
 	private var _current:Int;
 	private var _matrix:Matrix;
 	private var _angle:Float;
